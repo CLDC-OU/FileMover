@@ -1,0 +1,17 @@
+[project]
+name = "filemover"
+version = "1.0.0"
+description = "it mova da files :3"
+license = "MIT"
+license_files = ["LICENSE"]
+authors = [
+    { name = "Claire Childers", email = "clairechilders@oakland.edu" }
+]
+readme = "README.md"
+dependencies = [
+    "pytz"
+]
+
+[project.urls]
+Homepage = "https://github.com/CLDC-OU/FileMover"
+Repository = "https://github.com/CLDC-OU/FileMover.git"
