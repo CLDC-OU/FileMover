@@ -28,7 +28,7 @@ class TestMoverShouldMoveFile(unittest.TestCase):
         mover_config = self.default_config.copy()
         mover_config["file_types"] = "csv"
 
-        self.mover = Mover(MoverConfig(**mover_config))
+        self.mover = Mover(**mover_config)
 
     def test_none_file_name(self):
         self.assertFalse(self.mover._should_move_file(None))
@@ -39,14 +39,14 @@ class TestMoverShouldMoveFile(unittest.TestCase):
     def test_file_types(self):
         config = self.default_config.copy()
         config["file_types"] = ['txt', 'md']
-        mover = Mover(MoverConfig(**config))
+        mover = Mover(**config)
         self.assertTrue(mover._should_move_file("file.txt"))
         self.assertFalse(mover._should_move_file("file.pdf"))
 
     def test_file_type_regex(self):
         config = self.default_config.copy()
         config["file_type_regex"] = r'xl(s|t)x?$'
-        mover = Mover(MoverConfig(**config))
+        mover = Mover(**config)
         self.assertTrue(mover._should_move_file("report.xls"))
         self.assertTrue(mover._should_move_file("data.xlsx"))
         self.assertFalse(mover._should_move_file("notes.txt"))
@@ -55,28 +55,28 @@ class TestMoverShouldMoveFile(unittest.TestCase):
     def test_file_type_exclude_regex(self):
         config = self.default_config.copy()
         config["file_type_exclude_regex"] = r'.*bak$'
-        mover = Mover(MoverConfig(**config))
+        mover = Mover(**config)
         self.assertFalse(mover._should_move_file("data.bak"))
         self.assertTrue(mover._should_move_file("data.txt"))
 
     def test_file_names(self):
         config = self.default_config.copy()
         config["file_names"] = ["keep", "important"]
-        mover = Mover(MoverConfig(**config))
+        mover = Mover(**config)
         self.assertTrue(mover._should_move_file("keep.txt"))
         self.assertFalse(mover._should_move_file("other.txt"))
 
     def test_file_name_regex(self):
         config = self.default_config.copy()
         config["file_name_regex"] = r'^report_\d+$'
-        mover = Mover(MoverConfig(**config))
+        mover = Mover(**config)
         self.assertTrue(mover._should_move_file("report_123.csv"))
         self.assertFalse(mover._should_move_file("summary.csv"))
 
     def test_file_name_exclude_regex(self):
         config = self.default_config.copy()
         config["file_name_exclude_regex"] = r'^temp_.*'
-        mover = Mover(MoverConfig(**config))
+        mover = Mover(**config)
         self.assertFalse(mover._should_move_file("temp_file.txt"))
         self.assertTrue(mover._should_move_file("final.txt"))
 
@@ -84,21 +84,21 @@ class TestMoverShouldMoveFile(unittest.TestCase):
         config = self.default_config.copy()
         print(config["file_types"])
         config["file_name_contains"] = "data"
-        mover = Mover(MoverConfig(**config))
+        mover = Mover(**config)
         self.assertTrue(mover._should_move_file("mydata.txt"))
         self.assertFalse(mover._should_move_file("report.txt"))
 
     def test_file_name_starts_with(self):
         config = self.default_config.copy()
         config["file_name_starts_with"] = "start"
-        mover = Mover(MoverConfig(**config))
+        mover = Mover(**config)
         self.assertTrue(mover._should_move_file("startfile.txt"))
         self.assertFalse(mover._should_move_file("endfile.txt"))
 
     def test_file_name_ends_with(self):
         config = self.default_config.copy()
         config["file_name_ends_with"] = ".done"
-        mover = Mover(MoverConfig(**config))
+        mover = Mover(**config)
         self.assertTrue(mover._should_move_file("task.done.txt"))
         self.assertFalse(mover._should_move_file("task.txt"))
         self.assertFalse(mover._should_move_file("task.done.NOT.txt"))
@@ -109,7 +109,7 @@ class TestMoverShouldMoveFile(unittest.TestCase):
         config["file_name_contains"] = "data"
         config["file_name_starts_with"] = "start"
         config["file_name_ends_with"] = ".final"
-        mover = Mover(MoverConfig(**config))
+        mover = Mover(**config)
         self.assertTrue(mover._should_move_file("startdata.final.txt"))
         self.assertFalse(mover._should_move_file("data.txt"))
         self.assertFalse(mover._should_move_file("startdata.md"))

@@ -4,8 +4,8 @@ import os
 import re
 
 class Mover:
-    def __init__(self, config: MoverConfig):
-        self.config = config
+    def __init__(self, **kwargs):
+        self.config = MoverConfig(**kwargs)
 
     def __str__(self):
         return f"{self.config.mover_name}: {self.config.mover_description}"
