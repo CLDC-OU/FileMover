@@ -1,16 +1,16 @@
 # File Mover
 
-It moves files :3
+it mova da files :3
 
 ## Features
 
-- [ ] Move files from one location to another
-- [ ] Define custom "Movers" that specify file movement rules & patterns
-    - [ ] Filter files by name based on regex rules
-    - [ ] Filter files by file extension
+- [x] Move files from one location to another
+- [x] Define custom "Movers" that specify file movement rules & patterns
+    - [x] Filter files by name based on regex rules
+    - [x] Filter files by file extension
     - [ ] Filter files by a list of rules
-- [ ] Rename files when moving from one location to another
-- [ ] Copy files instead of moving (you're telling me the file mover can do more than moving???)
+- [x] Rename files when moving from one location to another
+- [x] Copy files instead of moving (you're telling me the file mover can do more than moving???)
 - [ ] Support environment variables like %HOMEPATH%
 - [ ] Support relative file paths
 - [ ] Custom scheduling to run at specific dates/times or frequencies
@@ -25,9 +25,19 @@ It moves files :3
 
 ## Dependencies
 
-```bash
-pip install -r requirements.txt
-```
+1. Set up a virtual environment (recommended)
+    ```bash
+    python -m venv .venv
+    ```
+2. Activate the virtual environment
+    - Windows:
+        ```bash
+        .venv\Scripts\activate
+        ```
+3. Install the required packages
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 ## Mover Configuration
 
