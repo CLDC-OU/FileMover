@@ -1,0 +1,7 @@
+{
+    "mover_name": "Basic Mover Example",
+    "mover_description": "A very simple mover that moves all files with the .txt extension from the source directory to the destination directory without renaming them",
+    "source_directory": "%HOMEPATH%\\Documents",
+    "destination_directory": "D:\\Data",
+    "file_type": "txt"
+}

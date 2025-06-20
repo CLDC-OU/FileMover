@@ -1,0 +1,30 @@
+{
+    "mover_name": "CSV Mover Example",
+    "mover_description": "This mover will move all csv files that start with 'Example_File' from the Documents directory to the Data directory and rename them to 'Prefix_{timestamp}_Renamed_Document_Suffix.csv'",
+    "source_directory": "%HOMEPATH%\\Documents",
+    "destination_directory": "D:\\Data",
+    "file_type": "csv",
+    "file_name": "Example_File*",
+    "rename": {
+        "enabled": true,
+        "replace": [
+            {
+                "search": "Example_",
+                "replace": "Renamed_"
+            },
+            {
+                "search": "_File",
+                "replace": "_Document"
+            }
+        ],
+        "case_sensitive": false,
+        "prefix": "Prefix_",
+        "suffix": "_Suffix",
+        "add_timestamp": {
+            "enabled": true,
+            "format": "yyyy-MM-dd_HH-mm-ss",
+            "timezone": "UTC",
+            "position": "after_prefix"
+        }
+    }
+}
