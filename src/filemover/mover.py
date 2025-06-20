@@ -1,4 +1,5 @@
-from src.filemover.mover_config import MoverConfig
+from __future__ import annotations
+from .mover_config import MoverConfig
 import shutil
 import os
 import re
