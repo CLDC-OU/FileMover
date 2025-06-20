@@ -6,6 +6,10 @@ build-backend = "setuptools.build_meta"
 packages = ["filemover"]
 package-dir = {"" = "src"}
 
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["filemover*"]
+
 [project]
 name = "filemover"
 version = "1.2.0"
