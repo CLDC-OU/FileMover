@@ -1,6 +1,6 @@
 import unittest
 import pytz
-from src.rename_config import RenameConfig, RenameRule, AddTimestampConfig, TimestampPosition
+from src.filemover.rename_config import RenameConfig, RenameRule, AddTimestampConfig, TimestampPosition
 
 class TestRenameConfig(unittest.TestCase):
     def test_rename_rule_repr(self):
