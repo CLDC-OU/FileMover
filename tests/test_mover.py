@@ -1,6 +1,5 @@
 import unittest
-from src.mover import Mover
-from src.mover_config import MoverConfig
+from src.filemover import Mover
 
 class DummyRenameConfig:
     def apply_rename(self, name):
