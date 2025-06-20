@@ -35,13 +35,13 @@ it mova da files :3
 
 1. Import the package into your Python project. Replace `<VERSION>` with the desired version number (e.g., `1.0.0`):
     ```bash
-    pip install file_mover @ git+https://github.com/CLDC-OU/FileMover.git@<VERSION>
+    pip install filemover @ git+https://github.com/CLDC-OU/FileMover.git@<VERSION>
     ```
 2. Create and configure a [Mover](#mover%20configuration)
 3. Use the Mover in your Python code:
     ```python
     import json
-    from file_mover import Mover
+    from filemover import Mover
 
     # Load your config
     with open("path/to/mover/config.json", 'r') as file:
