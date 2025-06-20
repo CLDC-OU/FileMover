@@ -1,6 +1,14 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["filemover"]
+package-dir = {"" = "src"}
+
 [project]
 name = "filemover"
-version = "1.1.0"
+version = "1.2.0"
 description = "it mova da files :3"
 license = "MIT"
 license-files = ["LICENSE"]

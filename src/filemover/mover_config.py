@@ -1,4 +1,4 @@
-from src.rename_config import RenameConfig
+from src.filemover.rename_config import RenameConfig
 
 class MoverConfig:
     def __init__(self, **kwargs):
