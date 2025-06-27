@@ -38,6 +38,7 @@ class MoverConfig:
             self._rename_config = None
 
         self._keep_source = kwargs.get('keep_source', False)
+        self._recursive = kwargs.get('recursive', False)
         self._validate()
 
     def __str__(self):
@@ -90,6 +91,9 @@ class MoverConfig:
     @property
     def keep_source(self) -> bool:
         return self._keep_source
+    @property
+    def recursive(self) -> bool:
+        return self._recursive
 
     def _validate(self):
         if not self._source_directories:
