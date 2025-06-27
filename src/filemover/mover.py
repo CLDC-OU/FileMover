@@ -68,13 +68,17 @@ class Mover:
         if not self.config.source_directories or not self.config.destination_directories:
             raise ValueError("Source and destination directories must be specified.")
         for source_dir in self.config.source_directories:
-            for root, _, files in os.walk(source_dir):
+            if self.config.recursive:
+                walker = os.walk(source_dir)
+            else:
+                walker = [(source_dir, [], os.listdir(source_dir))]
+            for root, _, files in walker:
                 for file_name in files:
                     if self._should_move_file(file_name):
                         print(f"File {file_name} matched on mover {self.config}")
-                        source_path = os.path.join(root, file_name)
-                        for dest_dir in self.config.destination_directories:
-                            self._copy_file(source_path, dest_dir)
-                        if not self.config.keep_source:
-                            os.remove(source_path)
-                            print(f"Removed source file {source_path}")
+                    source_path = os.path.join(root, file_name)
+                    for dest_dir in self.config.destination_directories:
+                        self._copy_file(source_path, dest_dir)
+                    if not self.config.keep_source:
+                        os.remove(source_path)
+                        print(f"Removed source file {source_path}")
