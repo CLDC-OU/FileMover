@@ -11,7 +11,7 @@ include = ["filemover*"]
 
 [project]
 name = "filemover"
-version = "1.2.2"
+version = "1.2.3"
 description = "it mova da files :3"
 license = "MIT"
 license-files = ["LICENSE"]
