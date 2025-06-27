@@ -76,9 +76,9 @@ class Mover:
                 for file_name in files:
                     if self._should_move_file(file_name):
                         print(f"File {file_name} matched on mover {self.config}")
-                    source_path = os.path.join(root, file_name)
-                    for dest_dir in self.config.destination_directories:
-                        self._copy_file(source_path, dest_dir)
-                    if not self.config.keep_source:
-                        os.remove(source_path)
-                        print(f"Removed source file {source_path}")
+                        source_path = os.path.join(root, file_name)
+                        for dest_dir in self.config.destination_directories:
+                            self._copy_file(source_path, dest_dir)
+                        if not self.config.keep_source:
+                            os.remove(source_path)
+                            print(f"Removed source file {source_path}")
