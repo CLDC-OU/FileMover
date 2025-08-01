@@ -42,7 +42,7 @@ class MoverConfig:
         self._validate()
 
     def __str__(self):
-        return f"{self._mover_name}: {self._mover_description}"
+        return self._mover_name
     def __repr__(self):
         return f"MoverConfig(name={self._mover_name}, description={self._mover_description})"
 
