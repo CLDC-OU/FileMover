@@ -100,6 +100,9 @@ class Mover:
         self.config = config
     
     def move_files(self):
+        """
+        Runs the mover based on its configuration to move (or copy) all files in the source directories to the configured destination directories
+        """
         print(f"Starting mover {self.config}")
         if not self.config.source_directories or not self.config.destination_directories:
             raise ValueError("Source and destination directories must be specified.")
