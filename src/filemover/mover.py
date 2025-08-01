@@ -112,6 +112,29 @@ class Mover:
     def rename_config(self):
         return self.config.rename_config
     
+    def list_matched_files(self) -> list[str]:
+        """
+        List the paths of all files that match the mover's criteria
+        """
+        matched_files = []
+        if not self.config.source_directories or not self.config.destination_directories:
+            raise ValueError("Source and destination directories must be specified.")
+        for source_dir in self.config.source_directories:
+            if self.config.recursive:
+                walker = os.walk(source_dir)
+            else:
+                walker = [(source_dir, [], os.listdir(source_dir))]
+            for root, _, files in walker:
+                for file_name in files:
+                    if self._should_move_file(file_name):
+                        matched_files.append(os.path.join(root, file_name))
+        return matched_files
+
+    def matches_file(self, file_name) -> bool:
+        """
+        Check if the given file matches the mover's criteria
+        """
+        return self._should_move_file(file_name)
 
     def move_files(self):
         print(f"Starting mover {self.config}")
