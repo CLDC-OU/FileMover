@@ -1,5 +1,6 @@
 from __future__ import annotations
 from .mover_config import MoverConfig
+from .logger import logger
 import shutil
 import os
 import re
@@ -49,23 +50,23 @@ class Mover:
         if not os.path.exists(destination_path):
             os.makedirs(destination_path)
         
-        print(f"Copying file {source_path} to {destination_path}")
+        logger.info(f"Copying file \"{source_path}\" to \"{destination_path}\"")
         if self.config.rename_config:
-            print(f"\tApplying rename configuration: {self.config.rename_config}")
+            logger.info(f"\tApplying rename configuration: {self.config.rename_config}")
             destination_file_name = self.config.rename_config.apply_rename(os.path.basename(source_path)) if self.config.rename_config else os.path.basename(source_path)
-            print(f"\tRenaming file to {destination_file_name}")
+            logger.info(f"\tRenaming file to \"{destination_file_name}\"")
         else:
             destination_file_name = os.path.basename(source_path)
         destination_file_path = os.path.join(destination_path, destination_file_name)
         if os.path.exists(destination_file_path):
-            print(f"\tFile {destination_file_path} already exists. Skipping copy.")
+            logger.info(f"\tFile \"{destination_file_path}\" already exists. Skipping copy.")
             return
         shutil.copy2(source_path, destination_file_path)
-        print(f"\tSuccessfully copied file {source_path} to {destination_file_path}")
+        logger.info(f"\tSuccessfully copied file \"{source_path}\" to \"{destination_file_path}\"")
 
-    def list_matched_files(self) -> list[str]:
+    def get_matched_files(self) -> list[str]:
         """
-        List the paths of all files that match the mover's criteria
+        Returns a list of paths of all files that match the mover's criteria
         """
         matched_files = []
         if not self.config.source_directories:
@@ -80,6 +81,11 @@ class Mover:
                     if self._should_move_file(file_name):
                         matched_files.append(os.path.join(root, file_name))
         return matched_files
+
+    def list_matched_files(self) -> None:
+        logger.info(f"Matched files for \"{self.config}\":")
+        for matched_file in self.get_matched_files():
+            logger.info(f"\t\"{matched_file}\"")
 
     def matches_filename(self, file_name) -> bool:
         """
@@ -104,7 +110,7 @@ class Mover:
         """
         Runs the mover based on its configuration to move (or copy) all files in the source directories to the configured destination directories
         """
-        print(f"Starting mover {self.config}")
+        logger.info(f"Starting mover \"{self.config}\"")
         if not self.config.source_directories or not self.config.destination_directories:
             raise ValueError("Source and destination directories must be specified.")
         for source_dir in self.config.source_directories:
@@ -115,10 +121,10 @@ class Mover:
             for root, _, files in walker:
                 for file_name in files:
                     if self._should_move_file(file_name):
-                        print(f"File {file_name} matched on mover {self.config}")
+                        logger.info(f"File \"{file_name}\" matched on mover \"{self.config}\"")
                         source_path = os.path.join(root, file_name)
                         for dest_dir in self.config.destination_directories:
                             self._copy_file(source_path, dest_dir)
                         if not self.config.keep_source:
                             os.remove(source_path)
-                            print(f"Removed source file {source_path}")
+                            logger.info(f"Removed source file \"{source_path}\"")

@@ -147,7 +147,7 @@ class TestMoverListMatchedFiles(unittest.TestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
-    def test_list_matched_files_file_types(self):
+    def test_get_matched_files_file_types(self):
         config = {
             "mover_name": "TestMover",
             "mover_description": "Test Description",
@@ -159,11 +159,11 @@ class TestMoverListMatchedFiles(unittest.TestCase):
             "recursive": False
         }
         mover = Mover(**config)
-        matched = mover.list_matched_files()
+        matched = mover.get_matched_files()
         expected = [os.path.join(self.source_dir, f) for f in self.files if f.endswith(".txt")]
         self.assertCountEqual(matched, expected)
 
-    def test_list_matched_files_file_name_contains(self):
+    def test_get_matched_files_file_name_contains(self):
         config = {
             "mover_name": "TestMover",
             "mover_description": "Test Description",
@@ -176,11 +176,11 @@ class TestMoverListMatchedFiles(unittest.TestCase):
             "recursive": False
         }
         mover = Mover(**config)
-        matched = mover.list_matched_files()
+        matched = mover.get_matched_files()
         expected = [os.path.join(self.source_dir, f) for f in self.files if "data" in os.path.splitext(f)[0]]
         self.assertCountEqual(matched, expected)
 
-    def test_list_matched_files_file_name_regex(self):
+    def test_get_matched_files_file_name_regex(self):
         config = {
             "mover_name": "TestMover",
             "mover_description": "Test Description",
@@ -192,12 +192,12 @@ class TestMoverListMatchedFiles(unittest.TestCase):
             "recursive": False
         }
         mover = Mover(**config)
-        matched = mover.list_matched_files()
+        matched = mover.get_matched_files()
         # Only "task.done.txt" matches after removing extension
         expected = [os.path.join(self.source_dir, "task.done.txt")]
         self.assertCountEqual(matched, expected)
 
-    def test_list_matched_files_recursive(self):
+    def test_get_matched_files_recursive(self):
         sub_dir = os.path.join(self.source_dir, "sub")
         os.makedirs(sub_dir)
         with open(os.path.join(sub_dir, "subfile.txt"), "w") as f:
@@ -213,7 +213,7 @@ class TestMoverListMatchedFiles(unittest.TestCase):
             "recursive": True
         }
         mover = Mover(**config)
-        matched = mover.list_matched_files()
+        matched = mover.get_matched_files()
         expected = [os.path.join(self.source_dir, f) for f in self.files if f.endswith(".txt")]
         expected.append(os.path.join(sub_dir, "subfile.txt"))
         self.assertCountEqual(matched, expected)

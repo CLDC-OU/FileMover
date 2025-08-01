@@ -45,6 +45,9 @@ class AddTimestampConfig:
             raise ValueError(f"Invalid position: {self._position}. Must be one of {TimestampPosition.START}, {TimestampPosition.AFTER_PREFIX}, {TimestampPosition.BEFORE_SUFFIX}, {TimestampPosition.END}.")
         if not isinstance(self._format, str):
             raise TypeError("Format must be a string")
+    
+    def __repr__(self):
+        return f"AddTimestampConfig(enabled={self._enabled}, format='{self._format}', timezone='{self._timezone}', position={self._position})"
 
     @property
     def enabled(self) -> bool:
@@ -65,6 +68,9 @@ class RenameConfig:
         self._prefix = kwargs.get('prefix', '')
         self._suffix = kwargs.get('suffix', '')
         self._add_timestamp = AddTimestampConfig(**kwargs.get('add_timestamp', {}))
+
+    def __repr__(self):
+        return f"RenameConfig(enabled={self._enabled}, replace_rules={self._replace_rules}, case_sensitive={self._case_sensitive}, prefix='{self._prefix}', suffix='{self._suffix}', add_timestamp={self._add_timestamp})"
 
     @property
     def enabled(self) -> bool:
