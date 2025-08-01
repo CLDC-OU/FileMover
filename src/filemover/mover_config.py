@@ -98,7 +98,7 @@ class MoverConfig:
     def _validate(self):
         if not self._source_directories or len(self._source_directories) < 1:
             raise ValueError("At least one source directory must be specified")
-        if not self._destination_directories:
+        if not self._destination_directories or len(self._destination_directories) < 1:
             raise ValueError("At least one destination directory must be specified")
         if not self._file_types and not self._file_names and not self._file_type_regex and not self._file_name_regex \
             and not self._file_name_contains and not self._file_name_starts_with and not self._file_name_ends_with \
