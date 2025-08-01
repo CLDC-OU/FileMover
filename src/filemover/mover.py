@@ -68,8 +68,8 @@ class Mover:
         List the paths of all files that match the mover's criteria
         """
         matched_files = []
-        if not self.config.source_directories or not self.config.destination_directories:
-            raise ValueError("Source and destination directories must be specified.")
+        if not self.config.source_directories:
+            raise ValueError("Source directories must be specified.")
         for source_dir in self.config.source_directories:
             if self.config.recursive:
                 walker = os.walk(source_dir)
