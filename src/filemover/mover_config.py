@@ -53,7 +53,7 @@ class MoverConfig:
     def mover_description(self) -> str:
         return self._mover_description
     @property
-    def source_directories(self) -> list | None:
+    def source_directories(self) -> list:
         return self._source_directories
     @property
     def file_types(self) -> list | None:
@@ -83,7 +83,7 @@ class MoverConfig:
     def file_name_ends_with(self) -> str | None:
         return self._file_name_ends_with
     @property
-    def destination_directories(self) -> list | None:
+    def destination_directories(self) -> list:
         return self._destination_directories
     @property
     def rename_config(self) -> RenameConfig | None:
