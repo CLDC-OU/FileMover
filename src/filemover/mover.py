@@ -81,7 +81,7 @@ class Mover:
                         matched_files.append(os.path.join(root, file_name))
         return matched_files
 
-    def matches_file(self, file_name) -> bool:
+    def matches_filename(self, file_name) -> bool:
         """
         Check if the given file matches the mover's criteria
         """
