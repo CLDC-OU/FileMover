@@ -63,9 +63,9 @@ class Mover:
         shutil.copy2(source_path, destination_file_path)
         print(f"\tSuccessfully copied file {source_path} to {destination_file_path}")
 
-    def list_matched_files(self) -> list[str]:
+    def get_matched_files(self) -> list[str]:
         """
-        List the paths of all files that match the mover's criteria
+        Returns a list of paths of all files that match the mover's criteria
         """
         matched_files = []
         if not self.config.source_directories:
