@@ -1,5 +1,6 @@
 from __future__ import annotations
 from .mover_config import MoverConfig
+from .logger import logger
 import shutil
 import os
 import re
