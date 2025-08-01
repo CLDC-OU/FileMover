@@ -97,6 +97,7 @@ class Mover:
         """
         Set the mover's configuration
         """
+        config._validate()
         self.config = config
     
     def move_files(self):
