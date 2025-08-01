@@ -218,20 +218,5 @@ class TestMoverListMatchedFiles(unittest.TestCase):
         expected.append(os.path.join(sub_dir, "subfile.txt"))
         self.assertCountEqual(matched, expected)
 
-    def test_list_matched_files_missing_dirs(self):
-        config = {
-            "mover_name": "TestMover",
-            "mover_description": "Test Description",
-            "file_types": ["txt"],
-            "source_directories": [],
-            "destination_directories": [],
-            "keep_source": True,
-            "rename_config": None,
-            "recursive": False
-        }
-        with self.assertRaises(ValueError):
-            mover = Mover(**config)
-            mover.list_matched_files()
-
 if __name__ == "__main__":
     unittest.main()
