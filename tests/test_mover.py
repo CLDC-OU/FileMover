@@ -1,5 +1,7 @@
 import unittest
 from src.filemover import Mover
+import tempfile
+import os
 
 class DummyRenameConfig:
     def apply_rename(self, name):
@@ -112,6 +114,124 @@ class TestMoverShouldMoveFile(unittest.TestCase):
         self.assertTrue(mover._should_move_file("startdata.final.txt"))
         self.assertFalse(mover._should_move_file("data.txt"))
         self.assertFalse(mover._should_move_file("startdata.md"))
+
+class TestMoverListMatchedFiles(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.source_dir = os.path.join(self.temp_dir.name, "src")
+        self.dest_dir = os.path.join(self.temp_dir.name, "dst")
+        os.makedirs(self.source_dir)
+        os.makedirs(self.dest_dir)
+        self.files = [
+            "file1.txt",
+            "file2.csv",
+            "report.xls",
+            "notes.txt",
+            "data.xlsx",
+            "summary.csv",
+            "temp_file.txt",
+            "final.txt",
+            "startfile.txt",
+            "endfile.txt",
+            "task.done.txt",
+            "task.txt",
+            "task.done.NOT.txt",
+            "startdata.final.txt",
+            "data.txt",
+            "startdata.md"
+        ]
+        for fname in self.files:
+            with open(os.path.join(self.source_dir, fname), "w") as f:
+                f.write("test")
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def test_list_matched_files_file_types(self):
+        config = {
+            "mover_name": "TestMover",
+            "mover_description": "Test Description",
+            "file_types": ["txt"],
+            "source_directories": [self.source_dir],
+            "destination_directories": [self.dest_dir],
+            "keep_source": True,
+            "rename_config": None,
+            "recursive": False
+        }
+        mover = Mover(**config)
+        matched = mover.list_matched_files()
+        expected = [os.path.join(self.source_dir, f) for f in self.files if f.endswith(".txt")]
+        self.assertCountEqual(matched, expected)
+
+    def test_list_matched_files_file_name_contains(self):
+        config = {
+            "mover_name": "TestMover",
+            "mover_description": "Test Description",
+            "file_types": None,
+            "file_name_contains": "data",
+            "source_directories": [self.source_dir],
+            "destination_directories": [self.dest_dir],
+            "keep_source": True,
+            "rename_config": None,
+            "recursive": False
+        }
+        mover = Mover(**config)
+        matched = mover.list_matched_files()
+        expected = [os.path.join(self.source_dir, f) for f in self.files if "data" in os.path.splitext(f)[0]]
+        self.assertCountEqual(matched, expected)
+
+    def test_list_matched_files_file_name_regex(self):
+        config = {
+            "mover_name": "TestMover",
+            "mover_description": "Test Description",
+            "file_name_regex": r'^task\.done$',
+            "source_directories": [self.source_dir],
+            "destination_directories": [self.dest_dir],
+            "keep_source": True,
+            "rename_config": None,
+            "recursive": False
+        }
+        mover = Mover(**config)
+        matched = mover.list_matched_files()
+        # Only "task.done.txt" matches after removing extension
+        expected = [os.path.join(self.source_dir, "task.done.txt")]
+        self.assertCountEqual(matched, expected)
+
+    def test_list_matched_files_recursive(self):
+        sub_dir = os.path.join(self.source_dir, "sub")
+        os.makedirs(sub_dir)
+        with open(os.path.join(sub_dir, "subfile.txt"), "w") as f:
+            f.write("test")
+        config = {
+            "mover_name": "TestMover",
+            "mover_description": "Test Description",
+            "file_types": ["txt"],
+            "source_directories": [self.source_dir],
+            "destination_directories": [self.dest_dir],
+            "keep_source": True,
+            "rename_config": None,
+            "recursive": True
+        }
+        mover = Mover(**config)
+        matched = mover.list_matched_files()
+        expected = [os.path.join(self.source_dir, f) for f in self.files if f.endswith(".txt")]
+        expected.append(os.path.join(sub_dir, "subfile.txt"))
+        self.assertCountEqual(matched, expected)
+
+    def test_list_matched_files_missing_dirs(self):
+        config = {
+            "mover_name": "TestMover",
+            "mover_description": "Test Description",
+            "file_types": ["txt"],
+            "source_directories": [],
+            "destination_directories": [],
+            "keep_source": True,
+            "rename_config": None,
+            "recursive": False
+        }
+        with self.assertRaises(ValueError):
+            mover = Mover(**config)
+            mover.list_matched_files()
 
 if __name__ == "__main__":
     unittest.main()
