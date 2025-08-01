@@ -96,7 +96,7 @@ class MoverConfig:
         return self._recursive
 
     def _validate(self):
-        if not self._source_directories:
+        if not self._source_directories or len(self._source_directories) < 1:
             raise ValueError("At least one source directory must be specified")
         if not self._destination_directories:
             raise ValueError("At least one destination directory must be specified")
