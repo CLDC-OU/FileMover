@@ -63,57 +63,47 @@ class Mover:
         shutil.copy2(source_path, destination_file_path)
         print(f"\tSuccessfully copied file {source_path} to {destination_file_path}")
 
-    @property
-    def mover_name(self):
-        return self.config.mover_name
-    @property
-    def mover_description(self):
-        return self.config.mover_description
-    @property
-    def source_directories(self):
-        return self.config.source_directories
-    @property
-    def destination_directories(self):
-        return self.config.destination_directories
-    @property
-    def recursive(self):
-        return self.config.recursive
-    @property
-    def keep_source(self):
-        return self.config.keep_source
-    @property
-    def file_types(self):
-        return self.config.file_types
-    @property
-    def file_type_regex(self):
-        return self.config.file_type_regex
-    @property
-    def file_type_exclude_regex(self):
-        return self.config.file_type_exclude_regex
-    @property
-    def file_names(self):
-        return self.config.file_names
-    @property
-    def file_name_regex(self):
-        return self.config.file_name_regex
-    @property
-    def file_name_exclude_regex(self):
-        return self.config.file_name_exclude_regex
-    @property
-    def file_name_contains(self):
-        return self.config.file_name_contains
-    @property
-    def file_name_starts_with(self):
-        return self.config.file_name_starts_with
-    @property
-    def file_name_ends_with(self):
-        return self.config.file_name_ends_with
-    @property
-    def rename_config(self):
-        return self.config.rename_config
-    
+    def list_matched_files(self) -> list[str]:
+        """
+        List the paths of all files that match the mover's criteria
+        """
+        matched_files = []
+        if not self.config.source_directories:
+            raise ValueError("Source directories must be specified.")
+        for source_dir in self.config.source_directories:
+            if self.config.recursive:
+                walker = os.walk(source_dir)
+            else:
+                walker = [(source_dir, [], os.listdir(source_dir))]
+            for root, _, files in walker:
+                for file_name in files:
+                    if self._should_move_file(file_name):
+                        matched_files.append(os.path.join(root, file_name))
+        return matched_files
 
+    def matches_filename(self, file_name) -> bool:
+        """
+        Check if the given file matches the mover's criteria
+        """
+        return self._should_move_file(file_name)
+
+    def get_mover_config(self) -> MoverConfig:
+        """
+        Get the mover's configuration
+        """
+        return self.config
+
+    def set_mover_config(self, config: MoverConfig):
+        """
+        Set the mover's configuration
+        """
+        config._validate()
+        self.config = config
+    
     def move_files(self):
+        """
+        Runs the mover based on its configuration to move (or copy) all files in the source directories to the configured destination directories
+        """
         print(f"Starting mover {self.config}")
         if not self.config.source_directories or not self.config.destination_directories:
             raise ValueError("Source and destination directories must be specified.")
