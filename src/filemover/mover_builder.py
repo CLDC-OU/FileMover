@@ -784,7 +784,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         if menu_option == '0':
             return
         self._repeat_prompt_until_valid(
-            lambda: input(f"(Optional) Enter the {PARAMETER_COLOR}timestamp format{Style.RESET_ALL} (leave blank for default): ").strip().lower(),
+            lambda: input(f"(Optional) Enter the {PARAMETER_COLOR}timestamp format{Style.RESET_ALL} {Fore.BLACK}(e.g., yyyy-MM-dd_HH-mm-ss){Style.RESET_ALL} (leave blank for default): ").strip().lower(),
             input_condition=lambda x: self._try_set_timestamp_option('format', x),
             invalid_message=None
         )
