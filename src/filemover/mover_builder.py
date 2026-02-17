@@ -890,7 +890,21 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
                 break
             except Exception as e:
                 print(f"{ERROR_COLOR}Failed to save configuration: {e}{Style.RESET_ALL}")
+
     def interactive_build(self):
+        print(f"{Fore.LIGHTMAGENTA_EX}============================================================" \
+              f"\n\n" \
+              f"{Fore.LIGHTWHITE_EX}           Interactive File Mover Config Builder" \
+              f"\n{Fore.LIGHTBLACK_EX}" \
+              f"-> Follow the prompts to create the configuration for a new\n" \
+              f"   File Mover" \
+              f"\n" \
+              f"-> Once complete, you can use it in a new FileMover object\n"
+              f"   to perform your file moving actions as configured!"
+              f"\n\n" \
+              f"{Fore.LIGHTMAGENTA_EX}============================================================{Style.RESET_ALL}\n")
+        input(f"Press Enter to begin...")
+        print()
         self._interactive_source_directory()
         self._interactive_destination_directory()
 
