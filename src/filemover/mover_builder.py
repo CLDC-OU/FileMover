@@ -3,6 +3,7 @@ from src.filemover.rename_config import TimestampPosition
 from colorama import Fore, Style
 import os
 import pytz
+import json
 
 SET_INFO_COLOR = Fore.LIGHTBLACK_EX
 SET_PARAMETER_COLOR = Fore.LIGHTCYAN_EX
@@ -333,6 +334,14 @@ class MoverConfigBuilder:
         self.config['description'] = value
         self._print_set_message("Description", value)
         return self
+
+    def save_config(self, path):
+        self._validate_path(path)
+        if os.path.exists(path):
+            raise ValueError(f"{ERROR_COLOR}A file already exists at {path}. Overwriting files is disabled to avoid accidental data loss{Style.RESET_ALL}")
+        with open(path, 'w') as f:
+            json.dump(self.config, f, indent=4, default=str)
+        print(f"{Fore.GREEN}Configuration saved to {path}{Style.RESET_ALL}")
 #===========================================================
 
 
@@ -859,6 +868,28 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         
         self._interactive_timestamp_config()
 
+    def _interactive_save_config(self):
+        menu_option = self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"How would you like to save this configuration?", {'0': 'Print as Text', '1': 'Save to File', '2': 'Do Nothing'})).strip().lower(),
+            input_condition=lambda x: x in ['0', '1', '2'],
+            invalid_message="Please enter a valid menu option"
+        )
+        if menu_option == '2':
+            return
+        if menu_option == '0':
+            print(f"{Fore.GREEN}Configuration complete! Here is the resulting configuration:{Style.RESET_ALL}")
+            print(json.dumps(self.config, indent=4, default=str))
+        while True:
+            file_path = self._repeat_prompt_until_valid(
+                lambda: input(f"Enter the absolute path of the file to save the configuration to {Fore.BLACK}(including .json extension){Style.RESET_ALL}: ").strip(),
+                input_condition=lambda x: self._is_valid_path(x) and x.lower().endswith('.json'),
+                invalid_message="Please enter a valid absolute path ending with .json"
+            )
+            try:
+                self.save_config(file_path)
+                break
+            except Exception as e:
+                print(f"{ERROR_COLOR}Failed to save configuration: {e}{Style.RESET_ALL}")
     def interactive_build(self):
         self._interactive_source_directory()
         self._interactive_destination_directory()
@@ -871,4 +902,5 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
 
         self._interactive_name()
         self._interactive_description()
+        self._interactive_save_config()
         return self.config
