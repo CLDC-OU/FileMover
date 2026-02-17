@@ -197,11 +197,12 @@ class MoverConfigBuilder:
         if not value or len(value) < 1:
             timestamp["timezone"] = None
             return
-        if not value in pytz.all_timezones:
-            raise ValueError(f"{ERROR_COLOR}Timezone must be a valid timezone{Style.RESET_ALL}")
-        timestamp["timezone"] = value
+        if not value in [tz.lower() for tz in pytz.all_timezones]:
+            raise ValueError(f"{ERROR_COLOR}Timezone {value} is not a valid timezone{Style.RESET_ALL}")
+        normalized_value = pytz.all_timezones[[tz.lower() for tz in pytz.all_timezones].index(value)]
+        timestamp["timezone"] = normalized_value
         self.config['rename']['timestamp'] = timestamp
-        self._print_set_message("Timestamp Timezone", value, 'rename')
+        self._print_set_message("Timestamp Timezone", normalized_value, 'rename')
         return self
     def set_rename_timestamp_position(self, value):
         timestamp = self._create_or_get_timestamp()
