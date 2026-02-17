@@ -9,6 +9,7 @@ SET_PARAMETER_COLOR = Fore.LIGHTCYAN_EX
 SET_VALUE_COLOR = Fore.LIGHTYELLOW_EX
 MENU_OPTION_VALUE_COLOR = Fore.MAGENTA
 MENU_OPTION_NAME_COLOR = Fore.BLUE
+ERROR_COLOR = Fore.RED
 
 
 class InteractiveMoverConfigBuilder:
@@ -19,11 +20,11 @@ class InteractiveMoverConfigBuilder:
 
     def _validate_path(self, path):
         if not path or not path.strip():
-            raise ValueError(f"{Fore.RED}Path cannot be empty{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Path cannot be empty{Style.RESET_ALL}")
         if not isinstance(path, str):
-            raise ValueError(f"{Fore.RED}Path must be a string{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Path must be a string{Style.RESET_ALL}")
         if not os.path.isabs(path):
-            raise ValueError(f"{Fore.RED}Path must be an absolute path{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Path must be an absolute path{Style.RESET_ALL}")
 
     def _is_valid_path(self, path):
         if not path or not path.strip():
@@ -75,7 +76,7 @@ class InteractiveMoverConfigBuilder:
             elif option == 'description':
                 self.set_description(value)
             else:
-                raise ValueError(f"{Fore.RED}Unknown config option '{option}'")
+                raise ValueError(f"{ERROR_COLOR}Unknown config option '{option}'")
         except ValueError as e:
             print(e)
             return False
@@ -90,7 +91,7 @@ class InteractiveMoverConfigBuilder:
             elif option == 'suffix':
                 self.set_rename_suffix(value)
             else:
-                raise ValueError(f"{Fore.RED}Unknown rename config option '{option}'")
+                raise ValueError(f"{ERROR_COLOR}Unknown rename config option '{option}'")
         except ValueError as e:
             print(e)
             return False
@@ -105,7 +106,7 @@ class InteractiveMoverConfigBuilder:
             elif option == 'position':
                 self.set_rename_timestamp_position(value)
             else:
-                raise ValueError(f"{Fore.RED}Unknown rename timestamp config option '{option}'")
+                raise ValueError(f"{ERROR_COLOR}Unknown rename timestamp config option '{option}'")
         except ValueError as e:
             print(e)
             return False
@@ -130,7 +131,7 @@ class InteractiveMoverConfigBuilder:
 
     def set_rename_case_sensitive(self, value):
         if not isinstance(value, bool):
-            raise ValueError(f"{Fore.RED}Case Sensitive must be a boolean value{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Case Sensitive must be a boolean value{Style.RESET_ALL}")
         rename = self._create_or_get_rename()
         rename['case_sensitive'] = value
         self.config['rename'] = rename
@@ -154,7 +155,7 @@ class InteractiveMoverConfigBuilder:
         return self
     def add_replace_rule(self, value):
         if not 'search' in value or len(value['search']) < 1:
-            raise ValueError(f"{Fore.RED}Search must not be blank in replace rule{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Search must not be blank in replace rule{Style.RESET_ALL}")
         if not 'replace' in value:
             value['replace'] = ""
         
@@ -163,7 +164,7 @@ class InteractiveMoverConfigBuilder:
             rename['replace'] = []
         rename['replace'].append(value)
         self.config['rename'] = rename
-        print(f"{SET_INFO_COLOR}Added rename Replace Rule: {SET_PARAMETER_COLOR}Search{Style.RESET_ALL}{SET_INFO_COLOR}: {SET_VALUE_COLOR}{value['search']}{Style.RESET_ALL}{SET_INFO_COLOR}, Replace: {SET_VALUE_COLOR}{value['replace'] if len(value['replace']) > 0 else f'{Fore.RED}<REMOVE>{Style.RESET_ALL}'}{Style.RESET_ALL}")
+        print(f"{SET_INFO_COLOR}Added rename Replace Rule: {SET_PARAMETER_COLOR}Search{Style.RESET_ALL}{SET_INFO_COLOR}: {SET_VALUE_COLOR}{value['search']}{Style.RESET_ALL}{SET_INFO_COLOR}, Replace: {SET_VALUE_COLOR}{value['replace'] if len(value['replace']) > 0 else f'{ERROR_COLOR}<REMOVE>{Style.RESET_ALL}'}{Style.RESET_ALL}")
         return self
     
     def set_rename_timestamp_format(self, value):
@@ -182,7 +183,7 @@ class InteractiveMoverConfigBuilder:
             timestamp["timezone"] = None
             return
         if not value in pytz.all_timezones:
-            raise ValueError(f"{Fore.RED}Timezone must be a valid timezone{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Timezone must be a valid timezone{Style.RESET_ALL}")
         timestamp["timezone"] = value
         self.config['rename']['timestamp'] = timestamp
         self._print_set_message("Timestamp Timezone", value, 'rename')
@@ -193,7 +194,7 @@ class InteractiveMoverConfigBuilder:
             timestamp["position"] = None
             return
         if value not in [TimestampPosition.START.value, TimestampPosition.AFTER_PREFIX.value, TimestampPosition.BEFORE_SUFFIX.value, TimestampPosition.END.value]:
-            raise ValueError(f"{Fore.RED}Invalid position: {value}. Must be one of {TimestampPosition.START.value}, {TimestampPosition.AFTER_PREFIX.value}, {TimestampPosition.BEFORE_SUFFIX.value}, {TimestampPosition.END.value}{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Invalid position: {value}. Must be one of {TimestampPosition.START.value}, {TimestampPosition.AFTER_PREFIX.value}, {TimestampPosition.BEFORE_SUFFIX.value}, {TimestampPosition.END.value}{Style.RESET_ALL}")
         timestamp["position"] = value
         self.config['rename']['timestamp'] = timestamp
         self._print_set_message("Timestamp Position", value, 'rename')
@@ -227,90 +228,90 @@ class InteractiveMoverConfigBuilder:
     
     def set_file_type(self, value):
         if not value.isalnum():
-            raise ValueError(f"{Fore.RED}File type must be alphanumeric{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}File type must be alphanumeric{Style.RESET_ALL}")
         self.config['file_type'] = value
         self._print_set_message("File Type", value)
         return self
     def set_file_types(self, values):
         for value in values:
             if not value.isalnum():
-                raise ValueError(f"{Fore.RED}File type must be alphanumeric{Style.RESET_ALL}")
+                raise ValueError(f"{ERROR_COLOR}File type must be alphanumeric{Style.RESET_ALL}")
         self.config['file_types'] = values
         self._print_set_message("File Types", values)
         return self
     def set_file_type_regex(self, value):
         if not self._is_valid_regex(value):
-            raise ValueError(f"{Fore.RED}Regex file type must be a valid regular expression{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Regex file type must be a valid regular expression{Style.RESET_ALL}")
         self.config['file_type_regex'] = value
         self._print_set_message("File Type Regex", value)
         return self
     def set_file_type_exclude_regex(self, value):
         if not self._is_valid_regex(value):
-            raise ValueError(f"{Fore.RED}Regex exclude file type must be a valid regular expression{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Regex exclude file type must be a valid regular expression{Style.RESET_ALL}")
         self.config['file_type_exclude_regex'] = value
         self._print_set_message("File Type Exclude Regex", value)
         return self
 
     def set_file_name(self, value):
         if len(value) < 1:
-            raise ValueError(f"{Fore.RED}File name must not be blank{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}File name must not be blank{Style.RESET_ALL}")
         self.config['file_name'] = value
         self._print_set_message("File Name", value)
         return self
     def set_file_names(self, values):
         for value in values:
             if len(value) < 1:
-                raise ValueError(f"{Fore.RED}File name must not be blank{Style.RESET_ALL}")
+                raise ValueError(f"{ERROR_COLOR}File name must not be blank{Style.RESET_ALL}")
         self.config['file_names'] = values
         self._print_set_message("File Names", values)
         return self
     def set_file_name_contains(self, value):
         if len(value) < 1:
-            raise ValueError(f"{Fore.RED}File name contains must not be blank{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}File name contains must not be blank{Style.RESET_ALL}")
         self.config['file_name_contains'] = value
         self._print_set_message("File Name Contains", value)
         return self
     def set_file_name_starts_with(self, value):
         if len(value) < 1:
-            raise ValueError(f"{Fore.RED}File name starts with must not be blank{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}File name starts with must not be blank{Style.RESET_ALL}")
         self.config['file_name_starts_with'] = value
         self._print_set_message("File Name Starts With", value)
         return self
     def set_file_name_ends_with(self, value):
         if len(value) < 1:
-            raise ValueError(f"{Fore.RED}File name ends with must not be blank{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}File name ends with must not be blank{Style.RESET_ALL}")
         self.config['file_name_ends_with'] = value
         self._print_set_message("File Name Ends With", value)
         return self
     def set_file_name_regex(self, value):
         if not self._is_valid_regex(value):
-            raise ValueError(f"{Fore.RED}Regex file name must be a valid regular expression{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Regex file name must be a valid regular expression{Style.RESET_ALL}")
         self.config['file_name_regex'] = value
         self._print_set_message("File Name Regex", value)
         return self
     def set_file_name_exclude_regex(self, value):
         if not self._is_valid_regex(value):
-            raise ValueError(f"{Fore.RED}Regex exclude file name must be a valid regular expression{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Regex exclude file name must be a valid regular expression{Style.RESET_ALL}")
         self.config['file_name_exclude_regex'] = value
         self._print_set_message("File Name Exclude Regex", value)
         return self
 
     def set_recursive(self, value):
         if not isinstance(value, bool):
-            raise ValueError(f"{Fore.RED}Recursive must be a boolean value{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Recursive must be a boolean value{Style.RESET_ALL}")
         self.config['recursive'] = value
         self._print_set_message("Recursive", value)
         return self
     def set_keep_source(self, value):
         if not isinstance(value, bool):
-            raise ValueError(f"{Fore.RED}Keep Source must be a boolean value{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Keep Source must be a boolean value{Style.RESET_ALL}")
         self.config['keep_source'] = value
         self._print_set_message("Keep Source", value)
         return self
 
     def set_name(self, value):
         if not value or len(value) < 1:
-            raise ValueError(f"{Fore.RED}Name must not be blank{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Name must not be blank{Style.RESET_ALL}")
         self.config['name'] = value
         self._print_set_message("Name", value)
         return self
@@ -327,9 +328,9 @@ class InteractiveMoverConfigBuilder:
                     return result
                 else:
                     if invalid_message:
-                        print(f"{Fore.RED}{invalid_message}{Style.RESET_ALL}")
+                        print(f"{ERROR_COLOR}{invalid_message}{Style.RESET_ALL}")
                     else:
-                        print(f"{Fore.RED}Invalid input{Style.RESET_ALL}")
+                        print(f"{ERROR_COLOR}Invalid input{Style.RESET_ALL}")
             except ValueError as e:
                 print(e)
 
@@ -368,7 +369,7 @@ class InteractiveMoverConfigBuilder:
                     )
                     if source.lower() == 'done':
                         if not self.config['source_directories']:
-                            print(f"{Fore.RED}At least one source directory must be specified{Style.RESET_ALL}")
+                            print(f"{ERROR_COLOR}At least one source directory must be specified{Style.RESET_ALL}")
                             continue
                         break
                     self.config['source_directories'].append(source)
@@ -402,7 +403,7 @@ class InteractiveMoverConfigBuilder:
                     )
                     if destination.lower() == 'done':
                         if not self.config['destination_directories']:
-                            print(f"{Fore.RED}At least one destination directory must be specified{Style.RESET_ALL}")
+                            print(f"{ERROR_COLOR}At least one destination directory must be specified{Style.RESET_ALL}")
                             continue
                         break
                     self.config['destination_directories'].append(destination)
@@ -523,7 +524,7 @@ class InteractiveMoverConfigBuilder:
                         )
                         if file_type == 'done':
                             if not len(self.config['file_types']) > 0:
-                                print(f"{Fore.RED}At least one file type must be specified{Style.RESET_ALL}")
+                                print(f"{ERROR_COLOR}At least one file type must be specified{Style.RESET_ALL}")
                                 continue
                             break
                         elif file_type in self.config['file_types']:
@@ -656,7 +657,7 @@ class InteractiveMoverConfigBuilder:
                         )
                         if file_name == 'done':
                             if not len(self.config['file_names']) > 0:
-                                print(f"{Fore.RED}At least one file name must be specified{Style.RESET_ALL}")
+                                print(f"{ERROR_COLOR}At least one file name must be specified{Style.RESET_ALL}")
                                 continue
                             break
                         elif file_name in self.config['file_names']:
@@ -722,7 +723,7 @@ class InteractiveMoverConfigBuilder:
                     if not has_file_type_filter and not has_name_filter:
                         
                         menu_option = self._repeat_prompt_until_valid(
-                            lambda: input(self._get_menu_text(f"{Fore.RED}Neither a file type nor file name filter has been defined. This will match ALL files in the source directory. Is this correct?{Style.RESET_ALL}", {'0': 'No', '1': 'Yes'})).strip().lower(),
+                            lambda: input(self._get_menu_text(f"{ERROR_COLOR}Neither a file type nor file name filter has been defined. This will match ALL files in the source directory. Is this correct?{Style.RESET_ALL}", {'0': 'No', '1': 'Yes'})).strip().lower(),
                             input_condition=lambda x: x in ['0', '1'],
                             invalid_message="Please enter a valid menu option"
                         )
