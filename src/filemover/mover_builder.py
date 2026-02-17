@@ -7,17 +7,20 @@ import pytz
 SET_INFO_COLOR = Fore.LIGHTBLACK_EX
 SET_PARAMETER_COLOR = Fore.LIGHTCYAN_EX
 SET_VALUE_COLOR = Fore.LIGHTYELLOW_EX
+PARAMETER_COLOR = Fore.CYAN
+VALUE_COLOR = Fore.YELLOW
 MENU_OPTION_VALUE_COLOR = Fore.MAGENTA
 MENU_OPTION_NAME_COLOR = Fore.BLUE
+WARNING_COLOR = Fore.LIGHTRED_EX
 ERROR_COLOR = Fore.RED
 
-
-class InteractiveMoverConfigBuilder:
+class MoverConfigBuilder:
     def __init__(self):
         self.multiple_sources = False
         self.multiple_destinations = False
         self.config = {}
 
+#=====Validator Helpers=====================================
     def _validate_path(self, path):
         if not path or not path.strip():
             raise ValueError(f"{ERROR_COLOR}Path cannot be empty{Style.RESET_ALL}")
@@ -34,17 +37,27 @@ class InteractiveMoverConfigBuilder:
         if not os.path.isabs(path):
             return False
         return True
-    
+
+    def _is_valid_regex(self, pattern):
+        import re
+        try:
+            re.compile(pattern)
+            return True
+        except re.error:
+            return False
+#===========================================================
+
+#=====Config Value Helpers==================================
     def _try_set_option(self, option, value):
         try:
             if option == 'source_directory':
-                self.set_source(value)
+                self.set_source_directory(value)
             elif option == 'source_directories':
-                self.set_sources(value)
+                self.set_source_directories(value)
             elif option == 'destination_directory':
-                self.set_destination(value)
+                self.set_destination_directory(value)
             elif option == 'destination_directories':
-                self.set_destinations(value)
+                self.set_destination_directories(value)
             elif option == 'file_type':
                 self.set_file_type(value)
             elif option == 'file_types':
@@ -125,10 +138,12 @@ class InteractiveMoverConfigBuilder:
             timestamp = {}
             timestamp["enabled"] = True
         return timestamp
+#===========================================================
 
     def _print_set_message(self, option, value, value_detail = None):
         print(f"{SET_INFO_COLOR}Set {f'{value_detail} ' if value_detail else ''}{SET_PARAMETER_COLOR}{option}{Style.RESET_ALL}{SET_INFO_COLOR} to {SET_VALUE_COLOR}{value}{Style.RESET_ALL}\n")
 
+#=====Config Value Setters==================================
     def set_rename_case_sensitive(self, value):
         if not isinstance(value, bool):
             raise ValueError(f"{ERROR_COLOR}Case Sensitive must be a boolean value{Style.RESET_ALL}")
@@ -199,27 +214,25 @@ class InteractiveMoverConfigBuilder:
         self.config['rename']['timestamp'] = timestamp
         self._print_set_message("Timestamp Position", value, 'rename')
         return self
-        
 
-
-    def set_source(self, value):
+    def set_source_directory(self, value):
         self._validate_path(value)
         self.config['source_directory'] = value
         self._print_set_message("Source Directory", value)
         return self
-    def set_sources(self, values):
+    def set_source_directories(self, values):
         for source in values:
             self._validate_path(source)
         self.config['source_directories'] = values
         self._print_set_message("Source Directories", values)
         return self
 
-    def set_destination(self, value):
+    def set_destination_directory(self, value):
         self._validate_path(value)
         self.config['destination_directory'] = value
         self._print_set_message("Destination Directory", value)
         return self
-    def set_destinations(self, values):
+    def set_destination_directories(self, values):
         for destination in values:
             self._validate_path(destination)
         self.config['destination_directories'] = values
@@ -319,7 +332,11 @@ class InteractiveMoverConfigBuilder:
         self.config['description'] = value
         self._print_set_message("Description", value)
         return self
-    
+#===========================================================
+
+
+class InteractiveMoverConfigBuilder(MoverConfigBuilder):
+#=====Input/Output Helpers==================================
     def _repeat_prompt_until_valid(self, prompt_func, input_condition=lambda x: True, invalid_message=None, *args):
         while True:
             try:
@@ -334,537 +351,523 @@ class InteractiveMoverConfigBuilder:
             except ValueError as e:
                 print(e)
 
-    def _is_valid_regex(self, pattern):
-        import re
-        try:
-            re.compile(pattern)
-            return True
-        except re.error:
-            return False
-
     def _get_menu_text(self, prompt, options):
         menu = f"{prompt}{Style.RESET_ALL}\n"
         for key, value in options.items():
             menu += f" [{MENU_OPTION_VALUE_COLOR}{key}{Style.RESET_ALL}] {MENU_OPTION_NAME_COLOR}{value}{Style.RESET_ALL}\n"
         return menu
+#===========================================================
 
-    def interactive_build(self):
-        # ===== Source Directory =====
-        
-        def source_directory():
-            option_map = {'0': False, '1': True}
-            self.multiple_sources = option_map.get(self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"Select your {Fore.CYAN}source directory mode{Style.RESET_ALL}:", {'0': 'Single Directory', '1': 'Multiple Directory'})).strip().lower(),
-                input_condition=lambda x: x in ['0', '1'],
-                invalid_message="Please enter a valid menu option"
-            ))
+    # ===== Source Directory =====
+    def _interactive_source_directory(self):
+        option_map = {'0': False, '1': True}
+        self.multiple_sources = option_map.get(self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"Select your {PARAMETER_COLOR}source directory mode{Style.RESET_ALL}:", {'0': 'Single Directory', '1': 'Multiple Directory'})).strip().lower(),
+            input_condition=lambda x: x in ['0', '1'],
+            invalid_message="Please enter a valid menu option"
+        ))
 
-            if self.multiple_sources:
-                self.config['source_directories'] = []
-                while True:
-                    source = self._repeat_prompt_until_valid(
-                        lambda: input(f"Enter {Fore.CYAN}source directory{Style.RESET_ALL} (or 'done' to finish): ").strip(),
-                        input_condition=lambda x: x.lower() == 'done' or self._is_valid_path(x),
-                        invalid_message="Please enter a valid absolute path or 'done'"
-                    )
-                    if source.lower() == 'done':
-                        if not self.config['source_directories']:
-                            print(f"{ERROR_COLOR}At least one source directory must be specified{Style.RESET_ALL}")
-                            continue
-                        break
-                    self.config['source_directories'].append(source)
-                print(f"{Fore.GREEN}Added source directories:{Style.RESET_ALL}")
-                for source in self.config['source_directories']:
-                    print(f"{Fore.YELLOW}- {source}{Style.RESET_ALL}")
-            else:
-                self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter {Fore.CYAN}source directory{Style.RESET_ALL}: ").strip(),
-                    input_condition=lambda x: self._try_set_option('source_directory', x),
-                    invalid_message="Please enter a valid absolute path"
-                )
-        
-        
-        # ===== Destination Directory =====
-        def destination_directory():
-            
-            menu_option = self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"Select your {Fore.CYAN}destination directory mode{Style.RESET_ALL}:", {'0': 'Single Directory', '1': 'Multiple Directory'})).strip().lower(),
-                input_condition=lambda x: x in ['0', '1'],
-                invalid_message="Please enter a valid menu option"
-            )
-            self.multiple_destinations = menu_option == '1'
-            if self.multiple_destinations:
-                self.config['destination_directories'] = []
-                while True:
-                    destination = self._repeat_prompt_until_valid(
-                        lambda: input(f"Enter {Fore.CYAN}destination directory{Style.RESET_ALL} (or 'done' to finish): ").strip(),
-                        input_condition=lambda x: x.lower() == 'done' or self._is_valid_path(x),
-                        invalid_message="Please enter a valid absolute path or 'done'"
-                    )
-                    if destination.lower() == 'done':
-                        if not self.config['destination_directories']:
-                            print(f"{ERROR_COLOR}At least one destination directory must be specified{Style.RESET_ALL}")
-                            continue
-                        break
-                    self.config['destination_directories'].append(destination)
-                print(f"{Fore.GREEN}Added destination directories:{Style.RESET_ALL}")
-                for destination in self.config['destination_directories']:
-                    print(f"{Fore.YELLOW}- {destination}{Style.RESET_ALL}")
-            else:
-                self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter {Fore.CYAN}destination directory{Style.RESET_ALL}: ").strip(),
-                    input_condition=lambda x: self._try_set_option('destination_directory', x),
-                    invalid_message="Please enter a valid absolute path"
-                )
-
-        # ===== Filters =====
-        def file_type_filter():
-            menu_option = self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"Which kind of {Fore.CYAN}file type filter{Style.RESET_ALL} would you like to configure?", {'0': 'Single File Type', '1': 'Multiple File Types', '2': 'Regex (include)', '3': 'Regex (exclude)', '4': 'Cancel (return to filter menu)'})).strip().lower(),
-                input_condition=lambda x: x in ['0', '1', '2', '3', '4'],
-                invalid_message="Please enter a valid menu option"
-            )
-            if menu_option == '0':
-                # Single File Type
-                continue_update = True
-                override_multi = False
-                update_multi = False
-                if 'file_type' in self.config:
-                    menu_option = self._repeat_prompt_until_valid(
-                        lambda: input(self._get_menu_text(f"{Fore.LIGHTRED_EX}You previously defined a {Fore.CYAN}Single File Type{Style.RESET_ALL}{Fore.LIGHTRED_EX} filter. Would you like to override it?{Style.RESET_ALL}", {'0': 'No (cancel)', '1': 'Yes'})).strip().lower(),
-                        input_condition=lambda x: x in ['0', '1'],
-                        invalid_message="Please enter a valid menu option"
-                    )
-                    if menu_option == '1':
-                        continue_update = True
-                    elif menu_option == '0':
-                        continue_update = False
-                if 'file_types' in self.config:
-                    
-                    menu_option = self._repeat_prompt_until_valid(
-                        lambda: input(self._get_menu_text(f"{Fore.LIGHTRED_EX}You previously defined a {Fore.CYAN}Multiple File Type{Style.RESET_ALL}{Fore.LIGHTRED_EX} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
-                        input_condition=lambda x: x in ['0', '1', '2'],
-                        invalid_message="Please enter a valid menu option"
-                    )
-                    if menu_option == '0':
-                        continue_update = True
-                        override_multi = True
-                    elif menu_option == '1':
-                        continue_update = True
-                        update_multi = True
-                    elif menu_option == '2':
-                        continue_update = False
-
-                if continue_update:
-                    file_type = self._repeat_prompt_until_valid(
-                        lambda: input(f"Enter a {Fore.CYAN}file type{Style.RESET_ALL} (without the preceding '.'): ").strip().lower(),
-                        input_condition=lambda x: x.isalnum(),
-                        invalid_message="Please enter a valid file type (alphanumeric characters only, no spaces or dots)"
-                    )
-                    if override_multi:
-                        self.config.pop('file_types', None)
-                        self.config['file_type'] = file_type
-                        self._print_set_message("File Type", file_type)
-                    elif update_multi:
-                        self.config['file_types'].append(file_type)
-                        self._print_set_message("File Types", self.config['file_types'])
-                    else:
-                        self.config['file_type'] = file_type
-                        self._print_set_message("File Type", file_type)
-            elif menu_option == '1':
-                # Multiple File Type
-                continue_update = True
-                override_single = False
-                update_single = False
-                override_multi = False
-                update_multi = False
-                if 'file_types' in self.config:
-                    menu_option = self._repeat_prompt_until_valid(
-                        lambda: input(self._get_menu_text(f"{Fore.LIGHTRED_EX}You previously defined a {Fore.CYAN}Multiple File Type Filter{Style.RESET_ALL}{Fore.LIGHTRED_EX}. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
-                        input_condition=lambda x: x in ['0', '1', '2'],
-                        invalid_message="Please enter a valid menu option"
-                    )
-                    if menu_option == '0':
-                        continue_update = True
-                        override_multi = True
-                    elif menu_option == '1':
-                        continue_update = True
-                        update_multi = True
-                    elif menu_option == '2':
-                        continue_update = False
-                if 'file_type' in self.config:
-                    
-                    menu_option = self._repeat_prompt_until_valid(
-                        lambda: input(self._get_menu_text(f"{Fore.LIGHTRED_EX}You previously defined a {Fore.CYAN}Single File Type Filter{Style.RESET_ALL}{Fore.LIGHTRED_EX}. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
-                        input_condition=lambda x: x in ['0', '1', '2'],
-                        invalid_message="Please enter a valid menu option"
-                    )
-                    if menu_option == '0':
-                        continue_update = True
-                        override_single = True
-                    elif menu_option == '1':
-                        continue_update = True
-                        update_single = True
-                    elif menu_option == '2':
-                        continue_update = False
-                if continue_update:
-                    if override_multi or not update_multi:
-                        self.config['file_types'] = []
-                    if override_single:
-                        self.config.pop('file_type', None)
-                    if update_single:
-                        self.config['file_types'].append(self.config['file_type'])
-                        self.config.pop('file_type', None)
-
-                    while True:
-                        file_type = self._repeat_prompt_until_valid(
-                            lambda: input(f"Enter a {Fore.CYAN}file type{Style.RESET_ALL} (without the preceding '.') or 'done' to finish: ").strip().lower(),
-                            input_condition=lambda x: x.isalnum(),
-                            invalid_message="Please enter a valid file type (alphanumeric characters only, no spaces or dots)"
-                        )
-                        if file_type == 'done':
-                            if not len(self.config['file_types']) > 0:
-                                print(f"{ERROR_COLOR}At least one file type must be specified{Style.RESET_ALL}")
-                                continue
-                            break
-                        elif file_type in self.config['file_types']:
-                            print(f"{Fore.YELLOW}{file_type}{Style.RESET_ALL} already included in {Fore.CYAN}file types{Style.RESET_ALL}")
-                        else:
-                            self.config['file_types'].append(file_type)
-                    self._print_set_message("File Types", self.config['file_types'])
-                    
-            elif menu_option == '2':
-                # Regex (include) File Type
-                self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter a regular expression to match {Fore.CYAN}file type{Style.RESET_ALL}: ").strip().lower(),
-                    input_condition=lambda x: self._try_set_option('file_type_regex', x),
-                    invalid_message="The specified input is not a valid regular expression"
-                )
-            elif menu_option == '3':
-                # Regex (exclude) File Type
-                self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter a regular expression to exclude {Fore.CYAN}file type{Style.RESET_ALL}: ").strip().lower(),
-                    input_condition=lambda x: self._try_set_option('file_type_exclude_regex', x),
-                    invalid_message="The specified input is not a valid regular expression"
-                )
-            elif menu_option == '4':
-                return
-        def file_name_filter():
-            
-            menu_option = self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"Which kind of {Fore.CYAN}file name filter{Style.RESET_ALL} would you like to configure?", {'0': 'Single Exact Name', '1': 'Multiple Exact Names', '2': 'Contains', '3': 'Starts With', '4': 'Ends With', '5': 'Regex (include)', '6': 'Regex (exclude)', '7': 'Cancel (return to filter menu)'})).strip().lower(),
-                input_condition=lambda x: x in ['0', '1', '2', '3', '4', '5', '6', '7'],
-                invalid_message="Please enter a valid menu option"
-            )
-            if menu_option == '0':
-                # Single Exact Name
-                continue_update = True
-                override_multi = False
-                update_multi = False
-                if 'file_name' in self.config:
-                    
-                    menu_option = self._repeat_prompt_until_valid(
-                        lambda: input(self._get_menu_text(f"{Fore.LIGHTRED_EX}You previously defined a {Fore.CYAN}Single File Name{Style.RESET_ALL}{Fore.LIGHTRED_EX} filter. Would you like to override it?{Style.RESET_ALL}", {'0': 'No (cancel)', '1': 'Yes'})).strip().lower(),
-                        input_condition=lambda x: x in ['0', '1'],
-                        invalid_message="Please enter a valid menu option"
-                    )
-                    if menu_option == '1':
-                        continue_update = True
-                    elif menu_option == '0':
-                        continue_update = False
-                if 'file_names' in self.config:
-                    
-                    menu_option = self._repeat_prompt_until_valid(
-                        lambda: input(self._get_menu_text(f"{Fore.LIGHTRED_EX}You previously defined a {Fore.CYAN}Multiple File Name{Style.RESET_ALL}{Fore.LIGHTRED_EX} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
-                        input_condition=lambda x: x in ['0', '1', '2'],
-                        invalid_message="Please enter a valid menu option"
-                    )
-                    if menu_option == '0':
-                        continue_update = True
-                        override_multi = True
-                    elif menu_option == '1':
-                        continue_update = True
-                        update_multi = True
-                    elif menu_option == '2':
-                        continue_update = False
-
-                if continue_update:
-                    file_name = self._repeat_prompt_until_valid(
-                        lambda: input(f"Enter a {Fore.CYAN}file name{Style.RESET_ALL} {Fore.BLACK}(note: do not include a file type extension - it will not be matched by this filter){Style.RESET_ALL}: ").strip().lower(),
-                        input_condition=lambda x: len(x) > 0,
-                        invalid_message="Please enter a valid file name"
-                    )
-                    if override_multi:
-                        self.config.pop('file_names', None)
-                        self.config['file_name'] = file_name
-                        self._print_set_message("File Name", file_name)
-                    elif update_multi:
-                        self.config['file_names'].append(file_name)
-                        self._print_set_message("File Names", self.config['file_names'])
-                    else:
-                        self.config['file_name'] = file_name
-                        self._print_set_message("File Name", file_name)
-                    
-            elif menu_option == '1':
-                # Multiple Exact Name
-                continue_update = True
-                override_single = False
-                update_single = False
-                override_multi = False
-                update_multi = False
-                if 'file_names' in self.config:
-                    menu_option = self._repeat_prompt_until_valid(
-                        lambda: input(self._get_menu_text(f"{Fore.LIGHTRED_EX}You previously defined a {Fore.CYAN}Multiple File Name{Style.RESET_ALL}{Fore.LIGHTRED_EX} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
-                        input_condition=lambda x: x in ['0', '1', '2'],
-                        invalid_message="Please enter a valid menu option"
-                    )
-                    if menu_option == '0':
-                        continue_update = True
-                        override_multi = True
-                    elif menu_option == '1':
-                        continue_update = True
-                        update_multi = True
-                    elif menu_option == '2':
-                        continue_update = False
-                if 'file_name' in self.config:
-                    menu_option = self._repeat_prompt_until_valid(
-                        lambda: input(self._get_menu_text(f"{Fore.LIGHTRED_EX}You previously defined a {Fore.CYAN}Single File Name{Style.RESET_ALL}{Fore.LIGHTRED_EX} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
-                        input_condition=lambda x: x in ['0', '1', '2'],
-                        invalid_message="Please enter a valid menu option"
-                    )
-                    if menu_option == '0':
-                        continue_update = True
-                        override_single = True
-                    elif menu_option == '1':
-                        continue_update = True
-                        update_single = True
-                    elif menu_option == '2':
-                        continue_update = False
-                if continue_update:
-                    if override_multi or not update_multi:
-                        self.config['file_names'] = []
-                    if override_single:
-                        self.config.pop('file_name', None)
-                    if update_single:
-                        self.config['file_names'].append(self.config['file_name'])
-                        self.config.pop('file_name', None)
-
-                    while True:
-                        file_name = self._repeat_prompt_until_valid(
-                            lambda: input(f"Enter a {Fore.CYAN}file name{Style.RESET_ALL} (without the file type extension) or 'done' to finish: ").strip().lower(),
-                            input_condition=lambda x: len(x) > 0,
-                            invalid_message="Please enter a valid file name"
-                        )
-                        if file_name == 'done':
-                            if not len(self.config['file_names']) > 0:
-                                print(f"{ERROR_COLOR}At least one file name must be specified{Style.RESET_ALL}")
-                                continue
-                            break
-                        elif file_name in self.config['file_names']:
-                            print(f"{Fore.YELLOW}{file_name}{Style.RESET_ALL} already included in {Fore.CYAN}file names{Style.RESET_ALL}")
-                        else:
-                            self.config['file_names'].append(file_name)
-                    self._print_set_message("File Names", self.config['file_names'])
-                    
-            elif menu_option == '2':
-                # Contains
-                self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter a substring to match within a {Fore.CYAN}file name{Style.RESET_ALL} (without the file type extension): ").strip().lower(),
-                    input_condition=lambda x: self._try_set_option('file_name_contains', x),
-                    invalid_message="Please enter a valid file name substring"
-                )
-            elif menu_option == '3':
-                # Starts With
-                self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter a substring to match the start of a {Fore.CYAN}file name{Style.RESET_ALL}: ").strip().lower(),
-                    input_condition=lambda x: self._try_set_option('file_name_starts_with', x),
-                    invalid_message="Please enter a valid file name substring"
-                )
-            elif menu_option == '4':
-                # Ends With
-                self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter a substring to match the end of a {Fore.CYAN}file name{Style.RESET_ALL} (without the file type extension): ").strip().lower(),
-                    input_condition=lambda x: self._try_set_option('file_name_ends_with', x),
-                    invalid_message="Please enter a valid file name substring"
-                )
-            elif menu_option == '5':
-                # Regex (include)
-                self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter a regex pattern to match files by {Fore.CYAN}file name{Style.RESET_ALL}: ").strip().lower(),
-                    input_condition=lambda x: self._try_set_option('file_name_regex', x),
-                    invalid_message="The specified input is not a valid regular expression"
-                )
-                
-            elif menu_option == '6':
-                # Regex (exclude)
-                self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter a regex pattern to exclude files by {Fore.CYAN}file name{Style.RESET_ALL}: ").strip().lower(),
-                    input_condition=lambda x: self._try_set_option('file_name_exclude_regex', x),
-                    invalid_message="The specified input is not a valid regular expression"
-                )
-            elif menu_option == '7':
-                return
-        def filters():
-            has_file_type_filter = False
-            has_name_filter = False
+        if self.multiple_sources:
+            self.config['source_directories'] = []
             while True:
-                menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"Select a {Fore.CYAN}file filter mode{Style.RESET_ALL} to configure (you will have the chance to define multiple):", {'0': 'File Type', '1': 'File Name', '2': 'Done / Apply All Filters'})).strip().lower(),
-                    input_condition=lambda x: x in ['0', '1', '2'],
-                    invalid_message="Please enter a valid menu option"
+                source = self._repeat_prompt_until_valid(
+                    lambda: input(f"Enter {PARAMETER_COLOR}source directory{Style.RESET_ALL} (or 'done' to finish): ").strip(),
+                    input_condition=lambda x: x.lower() == 'done' or self._is_valid_path(x),
+                    invalid_message="Please enter a valid absolute path or 'done'"
                 )
-                if menu_option == '0':
-                    file_type_filter()
-                    has_file_type_filter = True
-                elif menu_option == '1':
-                    file_name_filter()
-                    has_name_filter = True
-                elif menu_option == '2':
-                    if not has_file_type_filter and not has_name_filter:
-                        
-                        menu_option = self._repeat_prompt_until_valid(
-                            lambda: input(self._get_menu_text(f"{ERROR_COLOR}Neither a file type nor file name filter has been defined. This will match ALL files in the source directory. Is this correct?{Style.RESET_ALL}", {'0': 'No', '1': 'Yes'})).strip().lower(),
-                            input_condition=lambda x: x in ['0', '1'],
-                            invalid_message="Please enter a valid menu option"
-                        )
-                        if menu_option == '1':
-                            return
-                        else:
-                            continue
-                    return
-
-        # ===== Keep Source =====
-        def keep_source():
-            option_map = {'0': False, '1': True}
-            
+                if source.lower() == 'done':
+                    if not self.config['source_directories']:
+                        print(f"{ERROR_COLOR}At least one source directory must be specified{Style.RESET_ALL}")
+                        continue
+                    break
+                self.config['source_directories'].append(source)
+            print(f"{Fore.GREEN}Added source directories:{Style.RESET_ALL}")
+            for source in self.config['source_directories']:
+                print(f"{SET_VALUE_COLOR}- {source}{Style.RESET_ALL}")
+        else:
             self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"After the file move(s) are done, do you want to keep the source file or remove it?", {'0': 'Keep Source', '1': 'Remove Source'})).strip().lower(),
-                input_condition=lambda x: self._try_set_option('keep_source', option_map.get(x)),
-                invalid_message="Please enter a valid menu option"
+                lambda: input(f"Enter {PARAMETER_COLOR}source directory{Style.RESET_ALL}: ").strip(),
+                input_condition=lambda x: self._try_set_option('source_directory', x),
+                invalid_message="Please enter a valid absolute path"
             )
 
-        # ===== Recursive =====
-        def recursive():
-            option_map = {'0': False, '1': True}
-            
-            self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"Should file matching be recursive (i.e., traverse any subdirectories in the source directory to find matches)?", {'0': 'No', '1': 'Yes'})).strip().lower(),
-                input_condition=lambda x: self._try_set_option('recursive', option_map.get(x)),
-                invalid_message="Please enter a valid menu option"
-            )
-
-        # ===== Name =====
-        def name():
-            self._repeat_prompt_until_valid(
-                lambda: input(f"Enter a name for your file mover (a short identifier): ").strip().lower(),
-                input_condition=lambda x: self._try_set_option('name', x),
-                invalid_message="Please enter a valid string"
-            )
-
-        # ===== Description =====
-        def description():
-            self._repeat_prompt_until_valid(
-                lambda: input(f"Enter a description for your file mover (optional): ").strip().lower(),
-                input_condition=lambda x: self._try_set_option('description', x)
-            )
-        
-        # ===== Rename Configuration =====
-        def timestamp_config():
-            
-            menu_option = self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"Should a {Fore.CYAN}timestamp{Style.RESET_ALL} be added to moved files?", {'0': 'No', '1': 'Yes'})).strip().lower(),
-                input_condition=lambda x: x in ['0', '1'],
-                invalid_message="Please enter a valid menu option"
-            )
-            if menu_option == '0':
-                return
-            self._repeat_prompt_until_valid(
-                lambda: input(f"(Optional) Enter the {Fore.CYAN}timestamp format{Style.RESET_ALL} (leave blank for default): ").strip().lower(),
-                input_condition=lambda x: self._try_set_timestamp_option('format', x),
-                invalid_message=None
-            )
-            self._repeat_prompt_until_valid(
-                lambda: input(f"(Optional) Enter the {Fore.CYAN}timestamp timezone{Style.RESET_ALL} (leave blank for default): ").strip().lower(),
-                input_condition=lambda x: self._try_set_timestamp_option('timezone', x),
-                invalid_message=None
-            )
-            
-            option_map = {'0': TimestampPosition.START.value, '1': TimestampPosition.AFTER_PREFIX.value, '2': TimestampPosition.BEFORE_SUFFIX.value, '3': TimestampPosition.END.value}
-            
-            menu_option = self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"Select the {Fore.CYAN}position{Style.RESET_ALL} the timestamp should be placed:", {'0': 'Start', '1': 'After Prefix', '2': 'Before Suffix', '3': 'End'})).strip().lower(),
-                input_condition=lambda x: self._try_set_timestamp_option('position', option_map.get(x)),
-                invalid_message=None
-            )
-            
-            
-        def rename_config():
-            
-            menu_option = self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"Would you like to configure {Fore.CYAN}renaming files{Style.RESET_ALL} when they're moved?", {'0': 'No', '1': 'Yes'})).strip().lower(),
-                input_condition=lambda x: x in ['0', '1'],
-                invalid_message="Please enter a valid menu option"
-            )
-            if menu_option == '0':
-                return
-            
-            # Case sensitive
-            
-            menu_option = self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"Should rename replace matching rules be {Fore.CYAN}case sensitive{Style.RESET_ALL}?", {'0': 'No', '1': 'Yes'})).strip().lower(),
-                input_condition=lambda x: x in ['0', '1'],
-                invalid_message="Please enter a valid menu option"
-            )
-            if menu_option == '1':
-                self.set_rename_case_sensitive(True)
-            elif menu_option == '0':
-                self.set_rename_case_sensitive(False)
-            
-            # Prefix
-            self._repeat_prompt_until_valid(
-                lambda: input(f"(Optional) Enter a {Fore.CYAN}prefix{Style.RESET_ALL} to match files to rename: ").strip().lower(),
-                input_condition=lambda x: self._try_set_rename_option('prefix', x),
-                invalid_message=None
-            )
-            # Suffix
-            self._repeat_prompt_until_valid(
-                lambda: input(f"(Optional) Enter a {Fore.CYAN}suffix{Style.RESET_ALL} to match files to rename: ").strip().lower(),
-                input_condition=lambda x: self._try_set_rename_option('suffix', x),
-                invalid_message=None
-            )
-
+    # ===== Destination Directory =====
+    def _interactive_destination_directory(self):
+        menu_option = self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"Select your {PARAMETER_COLOR}destination directory mode{Style.RESET_ALL}:", {'0': 'Single Directory', '1': 'Multiple Directory'})).strip().lower(),
+            input_condition=lambda x: x in ['0', '1'],
+            invalid_message="Please enter a valid menu option"
+        )
+        self.multiple_destinations = menu_option == '1'
+        if self.multiple_destinations:
+            self.config['destination_directories'] = []
             while True:
+                destination = self._repeat_prompt_until_valid(
+                    lambda: input(f"Enter {PARAMETER_COLOR}destination directory{Style.RESET_ALL} (or 'done' to finish): ").strip(),
+                    input_condition=lambda x: x.lower() == 'done' or self._is_valid_path(x),
+                    invalid_message="Please enter a valid absolute path or 'done'"
+                )
+                if destination.lower() == 'done':
+                    if not self.config['destination_directories']:
+                        print(f"{ERROR_COLOR}At least one destination directory must be specified{Style.RESET_ALL}")
+                        continue
+                    break
+                self.config['destination_directories'].append(destination)
+            print(f"{Fore.GREEN}Added destination directories:{Style.RESET_ALL}")
+            for destination in self.config['destination_directories']:
+                print(f"{VALUE_COLOR}- {destination}{Style.RESET_ALL}")
+        else:
+            self._repeat_prompt_until_valid(
+                lambda: input(f"Enter {PARAMETER_COLOR}destination directory{Style.RESET_ALL}: ").strip(),
+                input_condition=lambda x: self._try_set_option('destination_directory', x),
+                invalid_message="Please enter a valid absolute path"
+            )
+
+    # ===== Filters =====
+    def _interactive_file_type_filter(self):
+        menu_option = self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file type filter{Style.RESET_ALL} would you like to configure?", {'0': 'Single File Type', '1': 'Multiple File Types', '2': 'Regex (include)', '3': 'Regex (exclude)', '4': 'Cancel (return to filter menu)'})).strip().lower(),
+            input_condition=lambda x: x in ['0', '1', '2', '3', '4'],
+            invalid_message="Please enter a valid menu option"
+        )
+        if menu_option == '0':
+            # Single File Type
+            continue_update = True
+            override_multi = False
+            update_multi = False
+            if 'file_type' in self.config:
                 menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"Add a {Fore.CYAN}text replace rule{Style.RESET_ALL}? You may define 0 or more", {'0': 'Add Rule', '1': 'Done'})).strip().lower(),
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Type{Style.RESET_ALL}{WARNING_COLOR} filter. Would you like to override it?{Style.RESET_ALL}", {'0': 'No (cancel)', '1': 'Yes'})).strip().lower(),
                     input_condition=lambda x: x in ['0', '1'],
                     invalid_message="Please enter a valid menu option"
                 )
                 if menu_option == '1':
-                    break
-                search = self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter the text to {Fore.CYAN}search/match{Style.RESET_ALL}: ").strip().lower(),
+                    continue_update = True
+                elif menu_option == '0':
+                    continue_update = False
+            if 'file_types' in self.config:
+                
+                menu_option = self._repeat_prompt_until_valid(
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Type{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
+                    input_condition=lambda x: x in ['0', '1', '2'],
+                    invalid_message="Please enter a valid menu option"
+                )
+                if menu_option == '0':
+                    continue_update = True
+                    override_multi = True
+                elif menu_option == '1':
+                    continue_update = True
+                    update_multi = True
+                elif menu_option == '2':
+                    continue_update = False
+
+            if continue_update:
+                file_type = self._repeat_prompt_until_valid(
+                    lambda: input(f"Enter a {PARAMETER_COLOR}file type{Style.RESET_ALL} (without the preceding '.'): ").strip().lower(),
+                    input_condition=lambda x: x.isalnum(),
+                    invalid_message="Please enter a valid file type (alphanumeric characters only, no spaces or dots)"
+                )
+                if override_multi:
+                    self.config.pop('file_types', None)
+                    self.config['file_type'] = file_type
+                    self._print_set_message("File Type", file_type)
+                elif update_multi:
+                    self.config['file_types'].append(file_type)
+                    self._print_set_message("File Types", self.config['file_types'])
+                else:
+                    self.config['file_type'] = file_type
+                    self._print_set_message("File Type", file_type)
+        elif menu_option == '1':
+            # Multiple File Type
+            continue_update = True
+            override_single = False
+            update_single = False
+            override_multi = False
+            update_multi = False
+            if 'file_types' in self.config:
+                menu_option = self._repeat_prompt_until_valid(
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Type Filter{Style.RESET_ALL}{WARNING_COLOR}. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
+                    input_condition=lambda x: x in ['0', '1', '2'],
+                    invalid_message="Please enter a valid menu option"
+                )
+                if menu_option == '0':
+                    continue_update = True
+                    override_multi = True
+                elif menu_option == '1':
+                    continue_update = True
+                    update_multi = True
+                elif menu_option == '2':
+                    continue_update = False
+            if 'file_type' in self.config:
+                
+                menu_option = self._repeat_prompt_until_valid(
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Type Filter{Style.RESET_ALL}{WARNING_COLOR}. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
+                    input_condition=lambda x: x in ['0', '1', '2'],
+                    invalid_message="Please enter a valid menu option"
+                )
+                if menu_option == '0':
+                    continue_update = True
+                    override_single = True
+                elif menu_option == '1':
+                    continue_update = True
+                    update_single = True
+                elif menu_option == '2':
+                    continue_update = False
+            if continue_update:
+                if override_multi or not update_multi:
+                    self.config['file_types'] = []
+                if override_single:
+                    self.config.pop('file_type', None)
+                if update_single:
+                    self.config['file_types'].append(self.config['file_type'])
+                    self.config.pop('file_type', None)
+
+                while True:
+                    file_type = self._repeat_prompt_until_valid(
+                        lambda: input(f"Enter a {PARAMETER_COLOR}file type{Style.RESET_ALL} (without the preceding '.') or 'done' to finish: ").strip().lower(),
+                        input_condition=lambda x: x.isalnum(),
+                        invalid_message="Please enter a valid file type (alphanumeric characters only, no spaces or dots)"
+                    )
+                    if file_type == 'done':
+                        if not len(self.config['file_types']) > 0:
+                            print(f"{ERROR_COLOR}At least one file type must be specified{Style.RESET_ALL}")
+                            continue
+                        break
+                    elif file_type in self.config['file_types']:
+                        print(f"{VALUE_COLOR}{file_type}{Style.RESET_ALL} already included in {PARAMETER_COLOR}file types{Style.RESET_ALL}")
+                    else:
+                        self.config['file_types'].append(file_type)
+                self._print_set_message("File Types", self.config['file_types'])
+                
+        elif menu_option == '2':
+            # Regex (include) File Type
+            self._repeat_prompt_until_valid(
+                lambda: input(f"Enter a regular expression to match {PARAMETER_COLOR}file type{Style.RESET_ALL}: ").strip().lower(),
+                input_condition=lambda x: self._try_set_option('file_type_regex', x),
+                invalid_message="The specified input is not a valid regular expression"
+            )
+        elif menu_option == '3':
+            # Regex (exclude) File Type
+            self._repeat_prompt_until_valid(
+                lambda: input(f"Enter a regular expression to exclude {PARAMETER_COLOR}file type{Style.RESET_ALL}: ").strip().lower(),
+                input_condition=lambda x: self._try_set_option('file_type_exclude_regex', x),
+                invalid_message="The specified input is not a valid regular expression"
+            )
+        elif menu_option == '4':
+            return
+    def _interactive_file_name_filter(self):
+        menu_option = self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file name filter{Style.RESET_ALL} would you like to configure?", {'0': 'Single Exact Name', '1': 'Multiple Exact Names', '2': 'Contains', '3': 'Starts With', '4': 'Ends With', '5': 'Regex (include)', '6': 'Regex (exclude)', '7': 'Cancel (return to filter menu)'})).strip().lower(),
+            input_condition=lambda x: x in ['0', '1', '2', '3', '4', '5', '6', '7'],
+            invalid_message="Please enter a valid menu option"
+        )
+        if menu_option == '0':
+            # Single Exact Name
+            continue_update = True
+            override_multi = False
+            update_multi = False
+            if 'file_name' in self.config:
+                
+                menu_option = self._repeat_prompt_until_valid(
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Name{Style.RESET_ALL}{WARNING_COLOR} filter. Would you like to override it?{Style.RESET_ALL}", {'0': 'No (cancel)', '1': 'Yes'})).strip().lower(),
+                    input_condition=lambda x: x in ['0', '1'],
+                    invalid_message="Please enter a valid menu option"
+                )
+                if menu_option == '1':
+                    continue_update = True
+                elif menu_option == '0':
+                    continue_update = False
+            if 'file_names' in self.config:
+                
+                menu_option = self._repeat_prompt_until_valid(
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Name{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
+                    input_condition=lambda x: x in ['0', '1', '2'],
+                    invalid_message="Please enter a valid menu option"
+                )
+                if menu_option == '0':
+                    continue_update = True
+                    override_multi = True
+                elif menu_option == '1':
+                    continue_update = True
+                    update_multi = True
+                elif menu_option == '2':
+                    continue_update = False
+
+            if continue_update:
+                file_name = self._repeat_prompt_until_valid(
+                    lambda: input(f"Enter a {PARAMETER_COLOR}file name{Style.RESET_ALL} {Fore.BLACK}(note: do not include a file type extension - it will not be matched by this filter){Style.RESET_ALL}: ").strip().lower(),
                     input_condition=lambda x: len(x) > 0,
-                    invalid_message="Search cannot be blank"
+                    invalid_message="Please enter a valid file name"
                 )
-                replace = self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter the text to {Fore.CYAN}replace{Style.RESET_ALL} the matched text in search with: ").strip().lower()
+                if override_multi:
+                    self.config.pop('file_names', None)
+                    self.config['file_name'] = file_name
+                    self._print_set_message("File Name", file_name)
+                elif update_multi:
+                    self.config['file_names'].append(file_name)
+                    self._print_set_message("File Names", self.config['file_names'])
+                else:
+                    self.config['file_name'] = file_name
+                    self._print_set_message("File Name", file_name)
+                
+        elif menu_option == '1':
+            # Multiple Exact Name
+            continue_update = True
+            override_single = False
+            update_single = False
+            override_multi = False
+            update_multi = False
+            if 'file_names' in self.config:
+                menu_option = self._repeat_prompt_until_valid(
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Name{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
+                    input_condition=lambda x: x in ['0', '1', '2'],
+                    invalid_message="Please enter a valid menu option"
                 )
-                try:
-                    self.add_replace_rule({"search": search, "replace": replace})
-                except ValueError as e:
-                    print(e)
+                if menu_option == '0':
+                    continue_update = True
+                    override_multi = True
+                elif menu_option == '1':
+                    continue_update = True
+                    update_multi = True
+                elif menu_option == '2':
+                    continue_update = False
+            if 'file_name' in self.config:
+                menu_option = self._repeat_prompt_until_valid(
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Name{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
+                    input_condition=lambda x: x in ['0', '1', '2'],
+                    invalid_message="Please enter a valid menu option"
+                )
+                if menu_option == '0':
+                    continue_update = True
+                    override_single = True
+                elif menu_option == '1':
+                    continue_update = True
+                    update_single = True
+                elif menu_option == '2':
+                    continue_update = False
+            if continue_update:
+                if override_multi or not update_multi:
+                    self.config['file_names'] = []
+                if override_single:
+                    self.config.pop('file_name', None)
+                if update_single:
+                    self.config['file_names'].append(self.config['file_name'])
+                    self.config.pop('file_name', None)
+
+                while True:
+                    file_name = self._repeat_prompt_until_valid(
+                        lambda: input(f"Enter a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension) or 'done' to finish: ").strip().lower(),
+                        input_condition=lambda x: len(x) > 0,
+                        invalid_message="Please enter a valid file name"
+                    )
+                    if file_name == 'done':
+                        if not len(self.config['file_names']) > 0:
+                            print(f"{ERROR_COLOR}At least one file name must be specified{Style.RESET_ALL}")
+                            continue
+                        break
+                    elif file_name in self.config['file_names']:
+                        print(f"{VALUE_COLOR}{file_name}{Style.RESET_ALL} already included in {PARAMETER_COLOR}file names{Style.RESET_ALL}")
+                    else:
+                        self.config['file_names'].append(file_name)
+                self._print_set_message("File Names", self.config['file_names'])
+                
+        elif menu_option == '2':
+            # Contains
+            self._repeat_prompt_until_valid(
+                lambda: input(f"Enter a substring to match within a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension): ").strip().lower(),
+                input_condition=lambda x: self._try_set_option('file_name_contains', x),
+                invalid_message="Please enter a valid file name substring"
+            )
+        elif menu_option == '3':
+            # Starts With
+            self._repeat_prompt_until_valid(
+                lambda: input(f"Enter a substring to match the start of a {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip().lower(),
+                input_condition=lambda x: self._try_set_option('file_name_starts_with', x),
+                invalid_message="Please enter a valid file name substring"
+            )
+        elif menu_option == '4':
+            # Ends With
+            self._repeat_prompt_until_valid(
+                lambda: input(f"Enter a substring to match the end of a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension): ").strip().lower(),
+                input_condition=lambda x: self._try_set_option('file_name_ends_with', x),
+                invalid_message="Please enter a valid file name substring"
+            )
+        elif menu_option == '5':
+            # Regex (include)
+            self._repeat_prompt_until_valid(
+                lambda: input(f"Enter a regex pattern to match files by {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip().lower(),
+                input_condition=lambda x: self._try_set_option('file_name_regex', x),
+                invalid_message="The specified input is not a valid regular expression"
+            )
             
-            timestamp_config()
+        elif menu_option == '6':
+            # Regex (exclude)
+            self._repeat_prompt_until_valid(
+                lambda: input(f"Enter a regex pattern to exclude files by {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip().lower(),
+                input_condition=lambda x: self._try_set_option('file_name_exclude_regex', x),
+                invalid_message="The specified input is not a valid regular expression"
+            )
+        elif menu_option == '7':
+            return
+    def _interactive_filters(self):
+        has_file_type_filter = False
+        has_name_filter = False
+        while True:
+            menu_option = self._repeat_prompt_until_valid(
+                lambda: input(self._get_menu_text(f"Select a {PARAMETER_COLOR}file filter mode{Style.RESET_ALL} to configure (you will have the chance to define multiple):", {'0': 'File Type', '1': 'File Name', '2': 'Done / Apply All Filters'})).strip().lower(),
+                input_condition=lambda x: x in ['0', '1', '2'],
+                invalid_message="Please enter a valid menu option"
+            )
+            if menu_option == '0':
+                self._interactive_file_type_filter()
+                has_file_type_filter = True
+            elif menu_option == '1':
+                self._interactive_file_name_filter()
+                has_name_filter = True
+            elif menu_option == '2':
+                if not has_file_type_filter and not has_name_filter:
+                    
+                    menu_option = self._repeat_prompt_until_valid(
+                        lambda: input(self._get_menu_text(f"{ERROR_COLOR}Neither a file type nor file name filter has been defined. This will match ALL files in the source directory. Is this correct?{Style.RESET_ALL}", {'0': 'No', '1': 'Yes'})).strip().lower(),
+                        input_condition=lambda x: x in ['0', '1'],
+                        invalid_message="Please enter a valid menu option"
+                    )
+                    if menu_option == '1':
+                        return
+                    else:
+                        continue
+                return
 
-        source_directory()
-        destination_directory()
-
-        filters()
+    # ===== Keep Source =====
+    def _interactive_keep_source(self):
+        option_map = {'0': False, '1': True}
         
-        rename_config()
-        keep_source()
-        recursive()
+        self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"After the file move(s) are done, do you want to keep the source file or remove it?", {'0': 'Keep Source', '1': 'Remove Source'})).strip().lower(),
+            input_condition=lambda x: self._try_set_option('keep_source', option_map.get(x)),
+            invalid_message="Please enter a valid menu option"
+        )
 
-        name()
-        description()
+    # ===== Recursive =====
+    def _interactive_recursive(self):
+        option_map = {'0': False, '1': True}
+        
+        self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"Should file matching be recursive (i.e., traverse any subdirectories in the source directory to find matches)?", {'0': 'No', '1': 'Yes'})).strip().lower(),
+            input_condition=lambda x: self._try_set_option('recursive', option_map.get(x)),
+            invalid_message="Please enter a valid menu option"
+        )
+
+    # ===== Name =====
+    def _interactive_name(self):
+        self._repeat_prompt_until_valid(
+            lambda: input(f"Enter a name for your file mover (a short identifier): ").strip().lower(),
+            input_condition=lambda x: self._try_set_option('name', x),
+            invalid_message="Please enter a valid string"
+        )
+
+    # ===== Description =====
+    def _interactive_description(self):
+        self._repeat_prompt_until_valid(
+            lambda: input(f"Enter a description for your file mover (optional): ").strip().lower(),
+            input_condition=lambda x: self._try_set_option('description', x)
+        )
+
+    # ===== Rename Configuration =====
+    def _interactive_timestamp_config(self):
+        menu_option = self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"Should a {PARAMETER_COLOR}timestamp{Style.RESET_ALL} be added to moved files?", {'0': 'No', '1': 'Yes'})).strip().lower(),
+            input_condition=lambda x: x in ['0', '1'],
+            invalid_message="Please enter a valid menu option"
+        )
+        if menu_option == '0':
+            return
+        self._repeat_prompt_until_valid(
+            lambda: input(f"(Optional) Enter the {PARAMETER_COLOR}timestamp format{Style.RESET_ALL} (leave blank for default): ").strip().lower(),
+            input_condition=lambda x: self._try_set_timestamp_option('format', x),
+            invalid_message=None
+        )
+        self._repeat_prompt_until_valid(
+            lambda: input(f"(Optional) Enter the {PARAMETER_COLOR}timestamp timezone{Style.RESET_ALL} (leave blank for default): ").strip().lower(),
+            input_condition=lambda x: self._try_set_timestamp_option('timezone', x),
+            invalid_message=None
+        )
+        
+        option_map = {'0': TimestampPosition.START.value, '1': TimestampPosition.AFTER_PREFIX.value, '2': TimestampPosition.BEFORE_SUFFIX.value, '3': TimestampPosition.END.value}
+        
+        menu_option = self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"Select the {PARAMETER_COLOR}position{Style.RESET_ALL} the timestamp should be placed:", {'0': 'Start', '1': 'After Prefix', '2': 'Before Suffix', '3': 'End'})).strip().lower(),
+            input_condition=lambda x: self._try_set_timestamp_option('position', option_map.get(x)),
+            invalid_message=None
+        )
+
+    def _interactive_rename_config(self):
+        menu_option = self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"Would you like to configure {PARAMETER_COLOR}renaming files{Style.RESET_ALL} when they're moved?", {'0': 'No', '1': 'Yes'})).strip().lower(),
+            input_condition=lambda x: x in ['0', '1'],
+            invalid_message="Please enter a valid menu option"
+        )
+        if menu_option == '0':
+            return
+        
+        # Case sensitive
+        
+        menu_option = self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"Should rename replace matching rules be {PARAMETER_COLOR}case sensitive{Style.RESET_ALL}?", {'0': 'No', '1': 'Yes'})).strip().lower(),
+            input_condition=lambda x: x in ['0', '1'],
+            invalid_message="Please enter a valid menu option"
+        )
+        if menu_option == '1':
+            self.set_rename_case_sensitive(True)
+        elif menu_option == '0':
+            self.set_rename_case_sensitive(False)
+        
+        # Prefix
+        self._repeat_prompt_until_valid(
+            lambda: input(f"(Optional) Enter a {PARAMETER_COLOR}prefix{Style.RESET_ALL} to match files to rename: ").strip().lower(),
+            input_condition=lambda x: self._try_set_rename_option('prefix', x),
+            invalid_message=None
+        )
+        # Suffix
+        self._repeat_prompt_until_valid(
+            lambda: input(f"(Optional) Enter a {PARAMETER_COLOR}suffix{Style.RESET_ALL} to match files to rename: ").strip().lower(),
+            input_condition=lambda x: self._try_set_rename_option('suffix', x),
+            invalid_message=None
+        )
+
+        while True:
+            menu_option = self._repeat_prompt_until_valid(
+                lambda: input(self._get_menu_text(f"Add a {PARAMETER_COLOR}text replace rule{Style.RESET_ALL}? You may define 0 or more", {'0': 'Add Rule', '1': 'Done'})).strip().lower(),
+                input_condition=lambda x: x in ['0', '1'],
+                invalid_message="Please enter a valid menu option"
+            )
+            if menu_option == '1':
+                break
+            search = self._repeat_prompt_until_valid(
+                lambda: input(f"Enter the text to {PARAMETER_COLOR}search/match{Style.RESET_ALL}: ").strip().lower(),
+                input_condition=lambda x: len(x) > 0,
+                invalid_message="Search cannot be blank"
+            )
+            replace = self._repeat_prompt_until_valid(
+                lambda: input(f"Enter the text to {PARAMETER_COLOR}replace{Style.RESET_ALL} the matched text in search with: ").strip().lower()
+            )
+            try:
+                self.add_replace_rule({"search": search, "replace": replace})
+            except ValueError as e:
+                print(e)
+        
+        self._interactive_timestamp_config()
+
+    def interactive_build(self):
+        self._interactive_source_directory()
+        self._interactive_destination_directory()
+
+        self._interactive_filters()
+        
+        self._interactive_rename_config()
+        self._interactive_keep_source()
+        self._interactive_recursive()
+
+        self._interactive_name()
+        self._interactive_description()
         return self.config
