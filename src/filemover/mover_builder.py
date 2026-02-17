@@ -198,7 +198,7 @@ class MoverConfigBuilder:
             timestamp["timezone"] = None
             return
         if not value in [tz.lower() for tz in pytz.all_timezones]:
-            raise ValueError(f"{ERROR_COLOR}Timezone {value} is not a valid timezone{Style.RESET_ALL}")
+            raise ValueError(f"{ERROR_COLOR}Timezone must be valid IANA timezone identifier (https://en.wikipedia.org/wiki/List_of_tz_database_time_zones){Style.RESET_ALL}")
         normalized_value = pytz.all_timezones[[tz.lower() for tz in pytz.all_timezones].index(value)]
         timestamp["timezone"] = normalized_value
         self.config['rename']['timestamp'] = timestamp
@@ -789,7 +789,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             invalid_message=None
         )
         self._repeat_prompt_until_valid(
-            lambda: input(f"(Optional) Enter the {PARAMETER_COLOR}timestamp timezone{Style.RESET_ALL} (leave blank for default): ").strip().lower(),
+            lambda: input(f"(Optional) Enter the {PARAMETER_COLOR}timestamp IANA Timezone Identifier{Style.RESET_ALL} {Fore.BLACK}Refer to https://en.wikipedia.org/wiki/List_of_tz_database_time_zones for a list of accepted values{Style.RESET_ALL}. (leave blank for default): ").strip().lower(),
             input_condition=lambda x: self._try_set_timestamp_option('timezone', x),
             invalid_message=None
         )
