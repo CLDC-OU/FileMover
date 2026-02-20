@@ -21,7 +21,7 @@ class TestRenameConfig(unittest.TestCase):
         cfg = AddTimestampConfig()
         self.assertFalse(cfg.enabled)
         self.assertEqual(cfg.position, TimestampPosition.AFTER_PREFIX)
-        self.assertIsInstance(cfg.get_timestamp(), str)
+        self.assertIsInstance(cfg.timestamp, str)
 
     def test_add_timestamp_config_invalid_timezone(self):
         with self.assertRaises(ValueError):
@@ -45,19 +45,19 @@ class TestRenameConfig(unittest.TestCase):
     
     def test_add_timestamp_config_get_timestamp(self):
         cfg = AddTimestampConfig(enabled=True, position='start')
-        timestamp = cfg.get_timestamp()
+        timestamp = cfg.timestamp
         self.assertIsInstance(timestamp, str)
         self.assertRegex(timestamp, r'^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$')
     
     def test_add_timestamp_config_get_timestamp_with_timezone(self):
         cfg = AddTimestampConfig(enabled=True, position='start', timezone='UTC')
-        timestamp = cfg.get_timestamp()
+        timestamp = cfg.timestamp
         self.assertIsInstance(timestamp, str)
         self.assertRegex(timestamp, r'^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$')
     
     def test_add_timestamp_config_get_timestamp_custom_format(self):
         cfg = AddTimestampConfig(enabled=True, position='start', format='%Y%m%d_%H%M%S')
-        timestamp = cfg.get_timestamp()
+        timestamp = cfg.timestamp
         self.assertIsInstance(timestamp, str)
         self.assertRegex(timestamp, r'^\d{8}_\d{6}$')
 
