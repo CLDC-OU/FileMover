@@ -14,6 +14,21 @@ class KeepSourceBehavior(Enum):
         if position not in cls._value2member_map_:
             raise ValueError(f"Invalid position: {position}. Must be one of {list(cls._value2member_map_.keys())}")
         return KeepSourceBehavior(cls._value2member_map_[position])
+    
+    @property
+    def description(self) -> str:
+        if self == KeepSourceBehavior.NEVER_KEEP_SOURCE:
+            return "Delete the source file (i.e., 'move' the file)"
+        elif self == KeepSourceBehavior.ALWAYS_KEEP_SOURCE:
+            return "Keep the source file (i.e., 'copy' the file)"
+        elif self == KeepSourceBehavior.KEEP_SOURCE_IF_ANY_COLLIDE:
+            return "Keep the source file if ANY destination files collide (delete otherwise)"
+        elif self == KeepSourceBehavior.KEEP_SOURCE_IF_ALL_COLLIDE:
+            return "Keep the source file if ALL destination files collide (delete otherwise)"
+        elif self == KeepSourceBehavior.KEEP_SOURCE_IF_NONE_COLLIDE:
+            return "Keep the source file if NO destination files collide (i.e., delete if any collide)"
+        else:
+            return "UNKNOWN"
 
 class CollisionAvoidanceBehavior(Enum):
     NONE = 'none'
@@ -25,6 +40,17 @@ class CollisionAvoidanceBehavior(Enum):
         if position not in cls._value2member_map_:
             raise ValueError(f"Invalid position: {position}. Must be one of {list(cls._value2member_map_.keys())}")
         return CollisionAvoidanceBehavior(cls._value2member_map_[position])
+    
+    @property
+    def description(self) -> str:
+        if self == CollisionAvoidanceBehavior.NONE:
+            return "Continue with the move operation"
+        elif self == CollisionAvoidanceBehavior.CANCEL_MOVE_IF_ANY_COLLIDE:
+            return "Cancel the move operation if any files would collide"
+        elif self == CollisionAvoidanceBehavior.CANCEL_MOVE_IF_ALL_COLLIDE:
+            return "Cancel the move operation if all files would collide"
+        else:
+            return "UNKNOWN"
 
 class DestinationCollisionBehavior(Enum):
     IGNORE = 'ignore'
@@ -35,6 +61,15 @@ class DestinationCollisionBehavior(Enum):
         if position not in cls._value2member_map_:
             raise ValueError(f"Invalid position: {position}. Must be one of {list(cls._value2member_map_.keys())}")
         return DestinationCollisionBehavior(cls._value2member_map_[position])
+
+    @property
+    def description(self) -> str:
+        if self == DestinationCollisionBehavior.IGNORE:
+            return "Ignore/skip the file move operation (do nothing) and proceed"
+        elif self == DestinationCollisionBehavior.OVERWRITE:
+            return "Overwrite the existing file"
+        else:
+            return "UNKNOWN"
 
 class MoverConfig:
     def __init__(self, **kwargs):
