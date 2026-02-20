@@ -18,7 +18,7 @@ class KeepSourceBehavior(Enum):
 class CollisionAvoidanceBehavior(Enum):
     NONE = 'none'
     CANCEL_MOVE_IF_ANY_COLLIDE = 'cancel_move_if_any_collide'
-    CANCEL_MOVE_IF_ALL_COLLIDE = 'cancel_move_if_any_collide'
+    CANCEL_MOVE_IF_ALL_COLLIDE = 'cancel_move_if_all_collide'
 
     @classmethod
     def from_string(cls, position: str) -> 'CollisionAvoidanceBehavior':
