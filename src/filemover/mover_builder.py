@@ -939,6 +939,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         if menu_option == '0':
             print(f"{Fore.GREEN}Configuration complete! Here is the resulting configuration:{Style.RESET_ALL}")
             print(json.dumps(self.config, indent=4, default=str))
+            return
         while True:
             file_path = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter the absolute path of the file to save the configuration to {Fore.BLACK}(including .json extension){Style.RESET_ALL}: ").strip(),
