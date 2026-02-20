@@ -1,5 +1,69 @@
 # Changelog
 
+## 1.2.7 (2025-08-01)
+
+```diff
+-   | Removed nullable directories config
++   | Improved logging messages for clarity
+```
+
+## 1.2.6 (2025-08-01)
+
+```diff
++   | Added utility functions to mover
+```
+
+## 1.2.5 (2026-08-01)
+
+```diff
++   | Added properties to Mover (structural change only, no difference in functionality)
+```
+
+## 1.2.4 (2025-06-27)
+
+```diff
+    | Fixed critical bug that processed unmatched files
+```
+
+## 1.2.3 (2025-06-27)
+
+```diff
+    | Updated package name in documentation
++   | Added recursive file moving
+```
+
+## 1.2.2 (2025-06-20)
+
+```diff
+-   | Removed duplicate package entry
+```
+
+## 1.2.1 (2025-06-20)
+
+```diff
++   | Added package finding configuration and future annotations
+```
+
+## 1.2.0 (2025-06-20)
+
+```diff
+    | Convert to package structure
++   | Added setuptools and fixed package locator
+```
+
+## 1.1.0 (2025-06-20)
+
+```diff
++   | Added example configuration files
+    | Renamed modules for functional clarity
+```
+
+## 1.0.2 (2025-06-20)
+
+```diff
+    | Fixed minor style error
+```
+
 ## 1.0.1 (2025-06-19)
 
 ```diff
