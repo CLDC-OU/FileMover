@@ -3,9 +3,9 @@ from src.filemover import Mover
 import tempfile
 import os
 
-class DummyRenameConfig:
-    def apply_rename(self, name):
-        return name
+class DummyRenameConfig():
+    def apply_rename(self, file_name):
+        return f"RENAMED_{file_name}"
 
 class TestMoverShouldMoveFile(unittest.TestCase):
     def setUp(self):
@@ -23,7 +23,9 @@ class TestMoverShouldMoveFile(unittest.TestCase):
             "file_name_ends_with": None,
             "source_directories": [""],
             "destination_directories": [""],
-            "keep_source": True,
+            "keep_source_behavior": "keep_source",
+            "destination_collision_behavior": "ignore",
+            "collision_avoidance_behavior": "none",
             "rename_config": None
         }
         mover_config = self.default_config.copy()
@@ -154,7 +156,9 @@ class TestMoverListMatchedFiles(unittest.TestCase):
             "file_types": ["txt"],
             "source_directories": [self.source_dir],
             "destination_directories": [self.dest_dir],
-            "keep_source": True,
+            "keep_source_behavior": "keep_source",
+            "destination_collision_behavior": "ignore",
+            "collision_avoidance_behavior": "none",
             "rename_config": None,
             "recursive": False
         }
@@ -171,7 +175,9 @@ class TestMoverListMatchedFiles(unittest.TestCase):
             "file_name_contains": "data",
             "source_directories": [self.source_dir],
             "destination_directories": [self.dest_dir],
-            "keep_source": True,
+            "keep_source_behavior": "keep_source",
+            "destination_collision_behavior": "ignore",
+            "collision_avoidance_behavior": "none",
             "rename_config": None,
             "recursive": False
         }
@@ -187,7 +193,9 @@ class TestMoverListMatchedFiles(unittest.TestCase):
             "file_name_regex": r'^task\.done$',
             "source_directories": [self.source_dir],
             "destination_directories": [self.dest_dir],
-            "keep_source": True,
+            "keep_source_behavior": "keep_source",
+            "destination_collision_behavior": "ignore",
+            "collision_avoidance_behavior": "none",
             "rename_config": None,
             "recursive": False
         }
@@ -208,7 +216,9 @@ class TestMoverListMatchedFiles(unittest.TestCase):
             "file_types": ["txt"],
             "source_directories": [self.source_dir],
             "destination_directories": [self.dest_dir],
-            "keep_source": True,
+            "keep_source_behavior": "keep_source",
+            "destination_collision_behavior": "ignore",
+            "collision_avoidance_behavior": "none",
             "rename_config": None,
             "recursive": True
         }
@@ -218,5 +228,82 @@ class TestMoverListMatchedFiles(unittest.TestCase):
         expected.append(os.path.join(sub_dir, "subfile.txt"))
         self.assertCountEqual(matched, expected)
 
-if __name__ == "__main__":
-    unittest.main()
+class TestMoverGetDestinationFilesForSource(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.src1 = os.path.join(self.temp_dir.name, "src1")
+        self.dest1 = os.path.join(self.temp_dir.name, "dst1")
+        self.dest2 = os.path.join(self.temp_dir.name, "dst2")
+        os.makedirs(self.src1)
+        os.makedirs(self.dest1)
+        os.makedirs(self.dest2)
+        self.src1_file1 = os.path.join(self.src1, "file.txt")
+        with open(self.src1_file1, "w") as f:
+            f.write("content")
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def _base_config(self):
+        return {
+            "mover_name": "TestMover",
+            "mover_description": "Test Description",
+            "file_types": ["txt"],
+            "source_directories": [self.src1],
+            "destination_directories": [self.dest1, self.dest2],
+            "keep_source_behavior": "keep_source",
+            "destination_collision_behavior": "ignore",
+            "collision_avoidance_behavior": "none",
+            "rename_config": None,
+            "recursive": False
+        }
+
+    def test_no_collisions_returns_all_destinations_and_no_collisions(self):
+        mover = Mover(**self._base_config())
+        destinations, collisions = mover._get_destination_files_for_source(self.src1_file1)
+        expected_destinations = [os.path.join(self.dest1, "file.txt"), os.path.join(self.dest2, "file.txt")]
+        expected_collisions = []
+        self.assertEqual(destinations, expected_destinations)
+        self.assertEqual(collisions, expected_collisions)
+
+    def test_with_collision_detects_existing_destination(self):
+        # Create a file in dest2 to simulate collision
+        existing_path = os.path.join(self.dest2, "file.txt")
+        with open(existing_path, "w") as f:
+            f.write("exists")
+        mover = Mover(**self._base_config())
+        destinations, collisions = mover._get_destination_files_for_source(self.src1_file1)
+        expected_destinations = [os.path.join(self.dest1, "file.txt"), os.path.join(self.dest2, "file.txt")]
+        expected_collisions = [existing_path]
+        self.assertEqual(destinations, expected_destinations)
+        self.assertEqual(collisions, expected_collisions)
+
+    def test_with_rename_config_applies_rename_to_destinations_and_collisions(self):
+        # Create a collision for the renamed name in dest1
+        renamed_name = "RENAMED_file.txt"
+        existing_renamed = os.path.join(self.dest1, renamed_name)
+        with open(existing_renamed, "w") as f:
+            f.write("exists")
+
+        config = self._base_config()
+        mover = Mover(**config)
+        mover.config._rename_config = DummyRenameConfig() # type: ignore
+        destinations, collisions = mover._get_destination_files_for_source(self.src1_file1)
+        expected_destinations = [os.path.join(self.dest1, renamed_name), os.path.join(self.dest2, renamed_name)]
+        expected_collisions = [existing_renamed]
+        self.assertEqual(destinations, expected_destinations)
+        self.assertEqual(collisions, expected_collisions)
+
+    def test_with_collisions_detects_multiple_existing_destinations(self):
+        existing_path_1 = os.path.join(self.dest1, "file.txt")
+        with open(existing_path_1, "w") as f:
+            f.write("exists")
+        existing_path_2 = os.path.join(self.dest2, "file.txt")
+        with open(existing_path_2, "w") as f:
+            f.write("exists")
+        mover = Mover(**self._base_config())
+        destinations, collisions = mover._get_destination_files_for_source(self.src1_file1)
+        expected_destinations = [os.path.join(self.dest1, "file.txt"), os.path.join(self.dest2, "file.txt")]
+        expected_collisions = [existing_path_1, existing_path_2]
+        self.assertEqual(destinations, expected_destinations)
+        self.assertEqual(collisions, expected_collisions)

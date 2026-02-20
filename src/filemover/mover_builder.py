@@ -1,4 +1,5 @@
 from src.filemover.rename_config import TimestampPosition
+from src.filemover.mover_config import KeepSourceBehavior, CollisionAvoidanceBehavior, DestinationCollisionBehavior
 
 from colorama import Fore, Style
 import os
@@ -83,8 +84,12 @@ class MoverConfigBuilder:
                 self.set_file_name_exclude_regex(value)
             elif option == 'recursive':
                 self.set_recursive(value)
-            elif option == 'keep_source':
-                self.set_keep_source(value)
+            elif option == 'keep_source_behavior':
+                self.set_keep_source_behavior(value)
+            elif option == 'collision_avoidance_behavior':
+                self.set_collision_avoidance_behavior(value)
+            elif option == 'destination_collision_behavior':
+                self.set_destination_collision_behavior(value)
             elif option == 'name':
                 self.set_name(value)
             elif option == 'description':
@@ -210,8 +215,8 @@ class MoverConfigBuilder:
         if not value or len(value) < 1:
             timestamp["position"] = None
             return
-        if value not in [TimestampPosition.START.value, TimestampPosition.AFTER_PREFIX.value, TimestampPosition.BEFORE_SUFFIX.value, TimestampPosition.END.value]:
-            raise ValueError(f"{ERROR_COLOR}Invalid position: {value}. Must be one of {TimestampPosition.START.value}, {TimestampPosition.AFTER_PREFIX.value}, {TimestampPosition.BEFORE_SUFFIX.value}, {TimestampPosition.END.value}{Style.RESET_ALL}")
+        if value not in [member.value for member in TimestampPosition]:
+            raise ValueError(f"{ERROR_COLOR}Invalid position: {value}. Must be one of {', '.join([member.value for member in TimestampPosition])}{Style.RESET_ALL}")
         timestamp["position"] = value
         self.config['rename']['timestamp'] = timestamp
         self._print_set_message("Timestamp Position", value, 'rename')
@@ -317,11 +322,35 @@ class MoverConfigBuilder:
         self.config['recursive'] = value
         self._print_set_message("Recursive", value)
         return self
-    def set_keep_source(self, value):
-        if not isinstance(value, bool):
-            raise ValueError(f"{ERROR_COLOR}Keep Source must be a boolean value{Style.RESET_ALL}")
-        self.config['keep_source'] = value
-        self._print_set_message("Keep Source", value)
+    def set_keep_source_behavior(self, value):
+        if not value or len(value) < 1:
+            self.config['keep_source_behavior'] = None
+            return
+
+        if not value in [member.value for member in KeepSourceBehavior]:
+            raise ValueError(f"{ERROR_COLOR}Invalid keep source behavior: {value}. Must be one of {', '.join([member.value for member in KeepSourceBehavior])}{Style.RESET_ALL}")
+        self.config['keep_source_behavior'] = value
+        self._print_set_message("Keep Source Behavior", value)
+        return self
+    def set_collision_avoidance_behavior(self, value):
+        if not value or len(value) < 1:
+            self.config['collision_avoidance_behavior'] = None
+            return
+
+        if not value in [member.value for member in CollisionAvoidanceBehavior]:
+            raise ValueError(f"{ERROR_COLOR}Invalid collision avoidance behavior: {value}. Must be one of {', '.join([member.value for member in CollisionAvoidanceBehavior])}{Style.RESET_ALL}")
+        self.config['collision_avoidance_behavior'] = value
+        self._print_set_message("Collision Avoidance Behavior", value)
+        return self
+    def set_destination_collision_behavior(self, value):
+        if not value or len(value) < 1:
+            self.config['destination_collision_behavior'] = None
+            return
+
+        if not value in [member.value for member in DestinationCollisionBehavior]:
+            raise ValueError(f"{ERROR_COLOR}Invalid destination collision behavior: {value}. Must be one of {', '.join([member.value for member in DestinationCollisionBehavior])}{Style.RESET_ALL}")
+        self.config['destination_collision_behavior'] = value
+        self._print_set_message("Destination Collision Behavior", value)
         return self
 
     def set_name(self, value):
@@ -748,13 +777,44 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
                         continue
                 return
 
-    # ===== Keep Source =====
-    def _interactive_keep_source(self):
-        option_map = {'0': False, '1': True}
+    # ===== Keep Source / Collisions =====
+    def _interactive_keep_source_behavior(self):
+        prompt_map = {}
+        option_map = {}
+        option_map[''] = None
+        for i in range(len(KeepSourceBehavior)):
+            prompt_map[f"{i}"] = list(KeepSourceBehavior)[i].description
+            option_map[f"{i}"] = list(KeepSourceBehavior)[i].value
         
         self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"After the file move(s) are done, do you want to keep the source file or remove it?", {'0': 'Keep Source', '1': 'Remove Source'})).strip().lower(),
-            input_condition=lambda x: self._try_set_option('keep_source', option_map.get(x)),
+            lambda: input(self._get_menu_text(f"(Optional) After the file move(s) are done, what should be done with the source file? (leave blank for default):", prompt_map)).strip().lower(),
+            input_condition=lambda x: self._try_set_option('keep_source_behavior', option_map.get(x, 'INVALID')),
+            invalid_message="Please enter a valid menu option"
+        )
+    def _interactive_collision_avoidance_behavior(self):
+        prompt_map = {}
+        option_map = {}
+        option_map[''] = None
+        for i in range(len(CollisionAvoidanceBehavior)):
+            prompt_map[f"{i}"] = list(CollisionAvoidanceBehavior)[i].description
+            option_map[f"{i}"] = list(CollisionAvoidanceBehavior)[i].value
+        
+        self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"(Optional) What should be done if moved files would collide with existing files? (leave blank for default):\n{SET_INFO_COLOR}Note: this check is performed before any files are attempted to be moved{Style.RESET_ALL}", prompt_map)).strip().lower(),
+            input_condition=lambda x: self._try_set_option('collision_avoidance_behavior', option_map.get(x, 'INVALID')),
+            invalid_message="Please enter a valid menu option"
+        )
+    def _interactive_destination_collision_behavior(self):
+        prompt_map = {}
+        option_map = {}
+        option_map[''] = None
+        for i in range(len(DestinationCollisionBehavior)):
+            prompt_map[f"{i}"] = list(DestinationCollisionBehavior)[i].description
+            option_map[f"{i}"] = list(DestinationCollisionBehavior)[i].value
+        
+        self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"(Optional) What should be done with colliding destination files? (leave blank for default):\n{SET_INFO_COLOR}Note: it is possible for no files to be moved but the source file to still be\nremoved (depending on the previous configuration) - make sure your choices\nresult in the intended behavior for your use case{Style.RESET_ALL}", prompt_map)).strip().lower(),
+            input_condition=lambda x: self._try_set_option('destination_collision_behavior', option_map.get(x, 'INVALID')),
             invalid_message="Please enter a valid menu option"
         )
 
@@ -911,7 +971,12 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         self._interactive_filters()
         
         self._interactive_rename_config()
-        self._interactive_keep_source()
+        self._interactive_keep_source_behavior()
+        self._interactive_collision_avoidance_behavior()
+        if self.config['collision_avoidance_behavior'] != CollisionAvoidanceBehavior.CANCEL_MOVE_IF_ANY_COLLIDE:
+            # Collision behavior does not matter if the move is canceled
+            # Cancel on all collisions still needs behavior if less than all collide
+            self._interactive_destination_collision_behavior()
         self._interactive_recursive()
 
         self._interactive_name()
