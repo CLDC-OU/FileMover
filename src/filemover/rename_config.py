@@ -45,6 +45,7 @@ class AddTimestampConfig:
             raise ValueError(f"Invalid position: {self._position}. Must be one of {TimestampPosition.START}, {TimestampPosition.AFTER_PREFIX}, {TimestampPosition.BEFORE_SUFFIX}, {TimestampPosition.END}.")
         if not isinstance(self._format, str):
             raise TypeError("Format must be a string")
+        self.refresh_timestamp()
     
     def __repr__(self):
         return f"AddTimestampConfig(enabled={self._enabled}, format='{self._format}', timezone='{self._timezone}', position={self._position})"
@@ -57,8 +58,12 @@ class AddTimestampConfig:
     def position(self) -> 'TimestampPosition':
         return self._position
 
-    def get_timestamp(self):
-        return datetime.now(self._timezone).strftime(self._format)
+    @property
+    def timestamp(self) -> str:
+        return self._timestamp
+    
+    def refresh_timestamp(self):
+        self._timestamp = datetime.now(self._timezone).strftime(self._format)
 
 class RenameConfig:
     def __init__(self, **kwargs):
@@ -95,7 +100,7 @@ class RenameConfig:
     @property
     def add_timestamp(self) -> AddTimestampConfig:
         return self._add_timestamp
-    
+
     def apply_rename(self, file_name: str) -> str:
         if not self.enabled:
             return file_name
@@ -111,9 +116,9 @@ class RenameConfig:
 
         # Add the timestamp if relative to prefix or suffix
         if self.add_timestamp.enabled and self.add_timestamp.position == TimestampPosition.AFTER_PREFIX:
-            file_name = f"{self.add_timestamp.get_timestamp()}_{file_name}"
+            file_name = f"{self.add_timestamp.timestamp}_{file_name}"
         elif self.add_timestamp.enabled and self.add_timestamp.position == TimestampPosition.BEFORE_SUFFIX:
-            file_name = f"{file_name}_{self.add_timestamp.get_timestamp()}"
+            file_name = f"{file_name}_{self.add_timestamp.timestamp}"
 
         # Add prefix and suffix
         if self.prefix:
@@ -124,9 +129,9 @@ class RenameConfig:
         # Add timestamp at the start or end
         if self.add_timestamp.enabled:
             if self.add_timestamp.position == TimestampPosition.START:
-                file_name = f"{self.add_timestamp.get_timestamp()}_{file_name}"
+                file_name = f"{self.add_timestamp.timestamp}_{file_name}"
             elif self.add_timestamp.position == TimestampPosition.END:
-                file_name = f"{file_name}_{self.add_timestamp.get_timestamp()}"
+                file_name = f"{file_name}_{self.add_timestamp.timestamp}"
 
         # Ensure the file name is not empty after renaming
         if not file_name:
