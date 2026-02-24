@@ -90,9 +90,9 @@ class MoverConfigBuilder:
                 self.set_collision_avoidance_behavior(value)
             elif option == 'destination_collision_behavior':
                 self.set_destination_collision_behavior(value)
-            elif option == 'name':
+            elif option == 'mover_name':
                 self.set_name(value)
-            elif option == 'description':
+            elif option == 'mover_description':
                 self.set_description(value)
             else:
                 raise ValueError(f"{ERROR_COLOR}Unknown config option '{option}'")
@@ -356,11 +356,11 @@ class MoverConfigBuilder:
     def set_name(self, value):
         if not value or len(value) < 1:
             raise ValueError(f"{ERROR_COLOR}Name must not be blank{Style.RESET_ALL}")
-        self.config['name'] = value
+        self.config['mover_name'] = value
         self._print_set_message("Name", value)
         return self
     def set_description(self, value):
-        self.config['description'] = value
+        self.config['mover_description'] = value
         self._print_set_message("Description", value)
         return self
 
@@ -832,7 +832,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
     def _interactive_name(self):
         self._repeat_prompt_until_valid(
             lambda: input(f"Enter a name for your file mover (a short identifier): ").strip(),
-            input_condition=lambda x: self._try_set_option('name', x),
+            input_condition=lambda x: self._try_set_option('mover_name', x),
             invalid_message="Please enter a valid string"
         )
 
@@ -840,7 +840,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
     def _interactive_description(self):
         self._repeat_prompt_until_valid(
             lambda: input(f"Enter a description for your file mover (optional): ").strip(),
-            input_condition=lambda x: self._try_set_option('description', x)
+            input_condition=lambda x: self._try_set_option('mover_description', x)
         )
 
     # ===== Rename Configuration =====
