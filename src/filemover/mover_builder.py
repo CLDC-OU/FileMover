@@ -401,7 +401,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
     def _interactive_source_directory(self):
         option_map = {'0': False, '1': True}
         self.multiple_sources = option_map.get(self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"Select your {PARAMETER_COLOR}source directory mode{Style.RESET_ALL}:", {'0': 'Single Directory', '1': 'Multiple Directory'})).strip().lower(),
+            lambda: input(self._get_menu_text(f"Select your {PARAMETER_COLOR}source directory mode{Style.RESET_ALL}:", {'0': 'Single Directory', '1': 'Multiple Directory'})).strip(),
             input_condition=lambda x: x in ['0', '1'],
             invalid_message="Please enter a valid menu option"
         ))
@@ -433,7 +433,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
     # ===== Destination Directory =====
     def _interactive_destination_directory(self):
         menu_option = self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"Select your {PARAMETER_COLOR}destination directory mode{Style.RESET_ALL}:", {'0': 'Single Directory', '1': 'Multiple Directory'})).strip().lower(),
+            lambda: input(self._get_menu_text(f"Select your {PARAMETER_COLOR}destination directory mode{Style.RESET_ALL}:", {'0': 'Single Directory', '1': 'Multiple Directory'})).strip(),
             input_condition=lambda x: x in ['0', '1'],
             invalid_message="Please enter a valid menu option"
         )
@@ -465,7 +465,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
     # ===== Filters =====
     def _interactive_file_type_filter(self):
         menu_option = self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file type filter{Style.RESET_ALL} would you like to configure?", {'0': 'Single File Type', '1': 'Multiple File Types', '2': 'Regex (include)', '3': 'Regex (exclude)', '4': 'Cancel (return to filter menu)'})).strip().lower(),
+            lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file type filter{Style.RESET_ALL} would you like to configure?", {'0': 'Single File Type', '1': 'Multiple File Types', '2': 'Regex (include)', '3': 'Regex (exclude)', '4': 'Cancel (return to filter menu)'})).strip(),
             input_condition=lambda x: x in ['0', '1', '2', '3', '4'],
             invalid_message="Please enter a valid menu option"
         )
@@ -476,7 +476,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             update_multi = False
             if 'file_type' in self.config:
                 menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Type{Style.RESET_ALL}{WARNING_COLOR} filter. Would you like to override it?{Style.RESET_ALL}", {'0': 'No (cancel)', '1': 'Yes'})).strip().lower(),
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Type{Style.RESET_ALL}{WARNING_COLOR} filter. Would you like to override it?{Style.RESET_ALL}", {'0': 'No (cancel)', '1': 'Yes'})).strip(),
                     input_condition=lambda x: x in ['0', '1'],
                     invalid_message="Please enter a valid menu option"
                 )
@@ -487,7 +487,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             if 'file_types' in self.config:
                 
                 menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Type{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Type{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip(),
                     input_condition=lambda x: x in ['0', '1', '2'],
                     invalid_message="Please enter a valid menu option"
                 )
@@ -525,7 +525,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             update_multi = False
             if 'file_types' in self.config:
                 menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Type Filter{Style.RESET_ALL}{WARNING_COLOR}. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Type Filter{Style.RESET_ALL}{WARNING_COLOR}. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip(),
                     input_condition=lambda x: x in ['0', '1', '2'],
                     invalid_message="Please enter a valid menu option"
                 )
@@ -540,7 +540,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             if 'file_type' in self.config:
                 
                 menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Type Filter{Style.RESET_ALL}{WARNING_COLOR}. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Type Filter{Style.RESET_ALL}{WARNING_COLOR}. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip(),
                     input_condition=lambda x: x in ['0', '1', '2'],
                     invalid_message="Please enter a valid menu option"
                 )
@@ -581,14 +581,14 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         elif menu_option == '2':
             # Regex (include) File Type
             self._repeat_prompt_until_valid(
-                lambda: input(f"Enter a regular expression to match {PARAMETER_COLOR}file type{Style.RESET_ALL}: ").strip().lower(),
+                lambda: input(f"Enter a regular expression to match {PARAMETER_COLOR}file type{Style.RESET_ALL}: ").strip(),
                 input_condition=lambda x: self._try_set_option('file_type_regex', x),
                 invalid_message="The specified input is not a valid regular expression"
             )
         elif menu_option == '3':
             # Regex (exclude) File Type
             self._repeat_prompt_until_valid(
-                lambda: input(f"Enter a regular expression to exclude {PARAMETER_COLOR}file type{Style.RESET_ALL}: ").strip().lower(),
+                lambda: input(f"Enter a regular expression to exclude {PARAMETER_COLOR}file type{Style.RESET_ALL}: ").strip(),
                 input_condition=lambda x: self._try_set_option('file_type_exclude_regex', x),
                 invalid_message="The specified input is not a valid regular expression"
             )
@@ -596,7 +596,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             return
     def _interactive_file_name_filter(self):
         menu_option = self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file name filter{Style.RESET_ALL} would you like to configure?", {'0': 'Single Exact Name', '1': 'Multiple Exact Names', '2': 'Contains', '3': 'Starts With', '4': 'Ends With', '5': 'Regex (include)', '6': 'Regex (exclude)', '7': 'Cancel (return to filter menu)'})).strip().lower(),
+            lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file name filter{Style.RESET_ALL} would you like to configure?", {'0': 'Single Exact Name', '1': 'Multiple Exact Names', '2': 'Contains', '3': 'Starts With', '4': 'Ends With', '5': 'Regex (include)', '6': 'Regex (exclude)', '7': 'Cancel (return to filter menu)'})).strip(),
             input_condition=lambda x: x in ['0', '1', '2', '3', '4', '5', '6', '7'],
             invalid_message="Please enter a valid menu option"
         )
@@ -608,7 +608,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             if 'file_name' in self.config:
                 
                 menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Name{Style.RESET_ALL}{WARNING_COLOR} filter. Would you like to override it?{Style.RESET_ALL}", {'0': 'No (cancel)', '1': 'Yes'})).strip().lower(),
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Name{Style.RESET_ALL}{WARNING_COLOR} filter. Would you like to override it?{Style.RESET_ALL}", {'0': 'No (cancel)', '1': 'Yes'})).strip(),
                     input_condition=lambda x: x in ['0', '1'],
                     invalid_message="Please enter a valid menu option"
                 )
@@ -619,7 +619,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             if 'file_names' in self.config:
                 
                 menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Name{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Name{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip(),
                     input_condition=lambda x: x in ['0', '1', '2'],
                     invalid_message="Please enter a valid menu option"
                 )
@@ -634,7 +634,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
 
             if continue_update:
                 file_name = self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter a {PARAMETER_COLOR}file name{Style.RESET_ALL} {Fore.BLACK}(note: do not include a file type extension - it will not be matched by this filter){Style.RESET_ALL}: ").strip().lower(),
+                    lambda: input(f"Enter a {PARAMETER_COLOR}file name{Style.RESET_ALL} {Fore.BLACK}(note: do not include a file type extension - it will not be matched by this filter){Style.RESET_ALL}: ").strip(),
                     input_condition=lambda x: len(x) > 0,
                     invalid_message="Please enter a valid file name"
                 )
@@ -658,7 +658,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             update_multi = False
             if 'file_names' in self.config:
                 menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Name{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Name{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip(),
                     input_condition=lambda x: x in ['0', '1', '2'],
                     invalid_message="Please enter a valid menu option"
                 )
@@ -672,7 +672,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
                     continue_update = False
             if 'file_name' in self.config:
                 menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Name{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip().lower(),
+                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Name{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip(),
                     input_condition=lambda x: x in ['0', '1', '2'],
                     invalid_message="Please enter a valid menu option"
                 )
@@ -695,11 +695,11 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
 
                 while True:
                     file_name = self._repeat_prompt_until_valid(
-                        lambda: input(f"Enter a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension) or 'done' to finish: ").strip().lower(),
+                        lambda: input(f"Enter a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension) or 'done' to finish: ").strip(),
                         input_condition=lambda x: len(x) > 0,
                         invalid_message="Please enter a valid file name"
                     )
-                    if file_name == 'done':
+                    if file_name.lower() == 'done':
                         if not len(self.config['file_names']) > 0:
                             print(f"{ERROR_COLOR}At least one file name must be specified{Style.RESET_ALL}")
                             continue
@@ -713,28 +713,28 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         elif menu_option == '2':
             # Contains
             self._repeat_prompt_until_valid(
-                lambda: input(f"Enter a substring to match within a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension): ").strip().lower(),
+                lambda: input(f"Enter a substring to match within a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension): ").strip(),
                 input_condition=lambda x: self._try_set_option('file_name_contains', x),
                 invalid_message="Please enter a valid file name substring"
             )
         elif menu_option == '3':
             # Starts With
             self._repeat_prompt_until_valid(
-                lambda: input(f"Enter a substring to match the start of a {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip().lower(),
+                lambda: input(f"Enter a substring to match the start of a {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip(),
                 input_condition=lambda x: self._try_set_option('file_name_starts_with', x),
                 invalid_message="Please enter a valid file name substring"
             )
         elif menu_option == '4':
             # Ends With
             self._repeat_prompt_until_valid(
-                lambda: input(f"Enter a substring to match the end of a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension): ").strip().lower(),
+                lambda: input(f"Enter a substring to match the end of a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension): ").strip(),
                 input_condition=lambda x: self._try_set_option('file_name_ends_with', x),
                 invalid_message="Please enter a valid file name substring"
             )
         elif menu_option == '5':
             # Regex (include)
             self._repeat_prompt_until_valid(
-                lambda: input(f"Enter a regex pattern to match files by {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip().lower(),
+                lambda: input(f"Enter a regex pattern to match files by {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip(),
                 input_condition=lambda x: self._try_set_option('file_name_regex', x),
                 invalid_message="The specified input is not a valid regular expression"
             )
@@ -742,7 +742,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         elif menu_option == '6':
             # Regex (exclude)
             self._repeat_prompt_until_valid(
-                lambda: input(f"Enter a regex pattern to exclude files by {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip().lower(),
+                lambda: input(f"Enter a regex pattern to exclude files by {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip(),
                 input_condition=lambda x: self._try_set_option('file_name_exclude_regex', x),
                 invalid_message="The specified input is not a valid regular expression"
             )
@@ -753,7 +753,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         has_name_filter = False
         while True:
             menu_option = self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"Select a {PARAMETER_COLOR}file filter mode{Style.RESET_ALL} to configure (you will have the chance to define multiple):", {'0': 'File Type', '1': 'File Name', '2': 'Done / Apply All Filters'})).strip().lower(),
+                lambda: input(self._get_menu_text(f"Select a {PARAMETER_COLOR}file filter mode{Style.RESET_ALL} to configure (you will have the chance to define multiple):", {'0': 'File Type', '1': 'File Name', '2': 'Done / Apply All Filters'})).strip(),
                 input_condition=lambda x: x in ['0', '1', '2'],
                 invalid_message="Please enter a valid menu option"
             )
@@ -767,7 +767,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
                 if not has_file_type_filter and not has_name_filter:
                     
                     menu_option = self._repeat_prompt_until_valid(
-                        lambda: input(self._get_menu_text(f"{ERROR_COLOR}Neither a file type nor file name filter has been defined. This will match ALL files in the source directory. Is this correct?{Style.RESET_ALL}", {'0': 'No', '1': 'Yes'})).strip().lower(),
+                        lambda: input(self._get_menu_text(f"{ERROR_COLOR}Neither a file type nor file name filter has been defined. This will match ALL files in the source directory. Is this correct?{Style.RESET_ALL}", {'0': 'No', '1': 'Yes'})).strip(),
                         input_condition=lambda x: x in ['0', '1'],
                         invalid_message="Please enter a valid menu option"
                     )
@@ -787,7 +787,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             option_map[f"{i}"] = list(KeepSourceBehavior)[i].value
         
         self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"(Optional) After the file move(s) are done, what should be done with the source file? (leave blank for default):", prompt_map)).strip().lower(),
+            lambda: input(self._get_menu_text(f"(Optional) After the file move(s) are done, what should be done with the source file? (leave blank for default):", prompt_map)).strip(),
             input_condition=lambda x: self._try_set_option('keep_source_behavior', option_map.get(x, 'INVALID')),
             invalid_message="Please enter a valid menu option"
         )
@@ -800,7 +800,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             option_map[f"{i}"] = list(CollisionAvoidanceBehavior)[i].value
         
         self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"(Optional) What should be done if moved files would collide with existing files? (leave blank for default):\n{SET_INFO_COLOR}Note: this check is performed before any files are attempted to be moved{Style.RESET_ALL}", prompt_map)).strip().lower(),
+            lambda: input(self._get_menu_text(f"(Optional) What should be done if moved files would collide with existing files? (leave blank for default):\n{SET_INFO_COLOR}Note: this check is performed before any files are attempted to be moved{Style.RESET_ALL}", prompt_map)).strip(),
             input_condition=lambda x: self._try_set_option('collision_avoidance_behavior', option_map.get(x, 'INVALID')),
             invalid_message="Please enter a valid menu option"
         )
@@ -813,7 +813,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             option_map[f"{i}"] = list(DestinationCollisionBehavior)[i].value
         
         self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"(Optional) What should be done with colliding destination files? (leave blank for default):\n{SET_INFO_COLOR}Note: it is possible for no files to be moved but the source file to still be\nremoved (depending on the previous configuration) - make sure your choices\nresult in the intended behavior for your use case{Style.RESET_ALL}", prompt_map)).strip().lower(),
+            lambda: input(self._get_menu_text(f"(Optional) What should be done with colliding destination files? (leave blank for default):\n{SET_INFO_COLOR}Note: it is possible for no files to be moved but the source file to still be\nremoved (depending on the previous configuration) - make sure your choices\nresult in the intended behavior for your use case{Style.RESET_ALL}", prompt_map)).strip(),
             input_condition=lambda x: self._try_set_option('destination_collision_behavior', option_map.get(x, 'INVALID')),
             invalid_message="Please enter a valid menu option"
         )
@@ -823,7 +823,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         option_map = {'0': False, '1': True}
         
         self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"Should file matching be recursive (i.e., traverse any subdirectories in the source directory to find matches)?", {'0': 'No', '1': 'Yes'})).strip().lower(),
+            lambda: input(self._get_menu_text(f"Should file matching be recursive (i.e., traverse any subdirectories in the source directory to find matches)?", {'0': 'No', '1': 'Yes'})).strip(),
             input_condition=lambda x: self._try_set_option('recursive', option_map.get(x)),
             invalid_message="Please enter a valid menu option"
         )
@@ -831,7 +831,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
     # ===== Name =====
     def _interactive_name(self):
         self._repeat_prompt_until_valid(
-            lambda: input(f"Enter a name for your file mover (a short identifier): ").strip().lower(),
+            lambda: input(f"Enter a name for your file mover (a short identifier): ").strip(),
             input_condition=lambda x: self._try_set_option('name', x),
             invalid_message="Please enter a valid string"
         )
@@ -839,21 +839,21 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
     # ===== Description =====
     def _interactive_description(self):
         self._repeat_prompt_until_valid(
-            lambda: input(f"Enter a description for your file mover (optional): ").strip().lower(),
+            lambda: input(f"Enter a description for your file mover (optional): ").strip(),
             input_condition=lambda x: self._try_set_option('description', x)
         )
 
     # ===== Rename Configuration =====
     def _interactive_timestamp_config(self):
         menu_option = self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"Should a {PARAMETER_COLOR}timestamp{Style.RESET_ALL} be added to moved files?", {'0': 'No', '1': 'Yes'})).strip().lower(),
+            lambda: input(self._get_menu_text(f"Should a {PARAMETER_COLOR}timestamp{Style.RESET_ALL} be added to moved files?", {'0': 'No', '1': 'Yes'})).strip(),
             input_condition=lambda x: x in ['0', '1'],
             invalid_message="Please enter a valid menu option"
         )
         if menu_option == '0':
             return
         self._repeat_prompt_until_valid(
-            lambda: input(f"(Optional) Enter the {PARAMETER_COLOR}timestamp format{Style.RESET_ALL} {Fore.BLACK}(e.g., yyyy-MM-dd_HH-mm-ss){Style.RESET_ALL} (leave blank for default): ").strip().lower(),
+            lambda: input(f"(Optional) Enter the {PARAMETER_COLOR}timestamp format{Style.RESET_ALL} {Fore.BLACK}(e.g., yyyy-MM-dd_HH-mm-ss){Style.RESET_ALL} (leave blank for default): ").strip(),
             input_condition=lambda x: self._try_set_timestamp_option('format', x),
             invalid_message=None
         )
@@ -866,14 +866,14 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         option_map = {'0': TimestampPosition.START.value, '1': TimestampPosition.AFTER_PREFIX.value, '2': TimestampPosition.BEFORE_SUFFIX.value, '3': TimestampPosition.END.value}
         
         menu_option = self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"Select the {PARAMETER_COLOR}position{Style.RESET_ALL} the timestamp should be placed:", {'0': 'Start', '1': 'After Prefix', '2': 'Before Suffix', '3': 'End'})).strip().lower(),
+            lambda: input(self._get_menu_text(f"Select the {PARAMETER_COLOR}position{Style.RESET_ALL} the timestamp should be placed:", {'0': 'Start', '1': 'After Prefix', '2': 'Before Suffix', '3': 'End'})).strip(),
             input_condition=lambda x: self._try_set_timestamp_option('position', option_map.get(x)),
             invalid_message=None
         )
 
     def _interactive_rename_config(self):
         menu_option = self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"Would you like to configure {PARAMETER_COLOR}renaming files{Style.RESET_ALL} when they're moved?", {'0': 'No', '1': 'Yes'})).strip().lower(),
+            lambda: input(self._get_menu_text(f"Would you like to configure {PARAMETER_COLOR}renaming files{Style.RESET_ALL} when they're moved?", {'0': 'No', '1': 'Yes'})).strip(),
             input_condition=lambda x: x in ['0', '1'],
             invalid_message="Please enter a valid menu option"
         )
@@ -883,7 +883,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         # Case sensitive
         
         menu_option = self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"Should rename replace matching rules be {PARAMETER_COLOR}case sensitive{Style.RESET_ALL}?", {'0': 'No', '1': 'Yes'})).strip().lower(),
+            lambda: input(self._get_menu_text(f"Should rename replace matching rules be {PARAMETER_COLOR}case sensitive{Style.RESET_ALL}?", {'0': 'No', '1': 'Yes'})).strip(),
             input_condition=lambda x: x in ['0', '1'],
             invalid_message="Please enter a valid menu option"
         )
@@ -894,32 +894,32 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         
         # Prefix
         self._repeat_prompt_until_valid(
-            lambda: input(f"(Optional) Enter a {PARAMETER_COLOR}prefix{Style.RESET_ALL} to match files to rename: ").strip().lower(),
+            lambda: input(f"(Optional) Enter a {PARAMETER_COLOR}prefix{Style.RESET_ALL} to match files to rename: "),
             input_condition=lambda x: self._try_set_rename_option('prefix', x),
             invalid_message=None
         )
         # Suffix
         self._repeat_prompt_until_valid(
-            lambda: input(f"(Optional) Enter a {PARAMETER_COLOR}suffix{Style.RESET_ALL} to match files to rename: ").strip().lower(),
+            lambda: input(f"(Optional) Enter a {PARAMETER_COLOR}suffix{Style.RESET_ALL} to match files to rename: "),
             input_condition=lambda x: self._try_set_rename_option('suffix', x),
             invalid_message=None
         )
 
         while True:
             menu_option = self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"Add a {PARAMETER_COLOR}text replace rule{Style.RESET_ALL}? You may define 0 or more", {'0': 'Add Rule', '1': 'Done'})).strip().lower(),
+                lambda: input(self._get_menu_text(f"Add a {PARAMETER_COLOR}text replace rule{Style.RESET_ALL}? You may define 0 or more", {'0': 'Add Rule', '1': 'Done'})).strip(),
                 input_condition=lambda x: x in ['0', '1'],
                 invalid_message="Please enter a valid menu option"
             )
             if menu_option == '1':
                 break
             search = self._repeat_prompt_until_valid(
-                lambda: input(f"Enter the text to {PARAMETER_COLOR}search/match{Style.RESET_ALL}: ").strip().lower(),
+                lambda: input(f"Enter the text to {PARAMETER_COLOR}search/match{Style.RESET_ALL}: "),
                 input_condition=lambda x: len(x) > 0,
                 invalid_message="Search cannot be blank"
             )
             replace = self._repeat_prompt_until_valid(
-                lambda: input(f"Enter the text to {PARAMETER_COLOR}replace{Style.RESET_ALL} the matched text in search with: ").strip().lower()
+                lambda: input(f"Enter the text to {PARAMETER_COLOR}replace{Style.RESET_ALL} the matched text in search with: ")
             )
             try:
                 self.add_replace_rule({"search": search, "replace": replace})
@@ -930,7 +930,7 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
 
     def _interactive_save_config(self):
         menu_option = self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"How would you like to save this configuration?", {'0': 'Print as Text', '1': 'Save to File', '2': 'Do Nothing'})).strip().lower(),
+            lambda: input(self._get_menu_text(f"How would you like to save this configuration?", {'0': 'Print as Text', '1': 'Save to File', '2': 'Do Nothing'})).strip(),
             input_condition=lambda x: x in ['0', '1', '2'],
             invalid_message="Please enter a valid menu option"
         )
