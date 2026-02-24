@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.3.0 (2026-02-)
+
+```diff
+-   | Removed "keep_source" configuration option
++   | Added "keep_source_behavior" configuration option
++   | Added "destination_collision_behavior"
++   | Added "collision_avoidance_behavior" configuration option
+
++   | Added interactive file mover configuration helper
++   | Added robust file collision handling
+
++   | Added consistent file timestamp initialization
+```
+
 ## 1.2.7 (2025-08-01)
 
 ```diff
