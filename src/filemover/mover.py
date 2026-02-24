@@ -64,11 +64,11 @@ class Mover:
         if self.config.keep_source_behavior == KeepSourceBehavior.ALWAYS_KEEP_SOURCE:
             should_remove = False
         elif self.config.keep_source_behavior == KeepSourceBehavior.KEEP_SOURCE_IF_ANY_COLLIDE:
-            should_remove = len(collisions) > 0
-        elif self.config.keep_source_behavior == KeepSourceBehavior.KEEP_SOURCE_IF_ALL_COLLIDE:
-            should_remove = len(collisions) > len(destinations)
-        elif self.config.keep_source_behavior == KeepSourceBehavior.KEEP_SOURCE_IF_NONE_COLLIDE:
             should_remove = len(collisions) == 0
+        elif self.config.keep_source_behavior == KeepSourceBehavior.KEEP_SOURCE_IF_ALL_COLLIDE:
+            should_remove = len(collisions) < len(destinations)
+        elif self.config.keep_source_behavior == KeepSourceBehavior.KEEP_SOURCE_IF_NONE_COLLIDE:
+            should_remove = len(collisions) > 0
         elif self.config.keep_source_behavior == KeepSourceBehavior.NEVER_KEEP_SOURCE:
             should_remove = True
         else:
