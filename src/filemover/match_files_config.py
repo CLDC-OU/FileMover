@@ -165,29 +165,29 @@ class FileMatchRule:
             if self.mode == FileNameMatchMode.SINGLE_EXACT:
                 if not isinstance(self.value, str):
                     raise ValueError("Invalid \"value\" type for specified match mode")
-                if self.case_sensitive:
+                if not self.case_sensitive:
                     return name.lower() == self.value.lower()
                 return name == self.value
             elif self.mode == FileNameMatchMode.MULTIPLE_EXACT:
-                if self.case_sensitive:
+                if not self.case_sensitive:
                     return name.lower() in [v.lower() for v in self.value]
                 return name in self.value
             elif self.mode == FileNameMatchMode.CONTAINS:
                 if not isinstance(self.value, str):
                     raise ValueError("Invalid \"value\" type for specified match mode")
-                if self.case_sensitive:
+                if not self.case_sensitive:
                     return self.value.lower() in name.lower()
                 return self.value in name
             elif self.mode == FileNameMatchMode.STARTS_WITH:
                 if not isinstance(self.value, str):
                     raise ValueError("Invalid \"value\" type for specified match mode")
-                if self.case_sensitive:
+                if not self.case_sensitive:
                     return name.lower().startswith(self.value.lower())
                 return name.startswith(self.value)
             elif self.mode == FileNameMatchMode.ENDS_WITH:
                 if not isinstance(self.value, str):
                     raise ValueError("Invalid \"value\" type for specified match mode")
-                if self.case_sensitive:
+                if not self.case_sensitive:
                     return name.lower().endswith(self.value.lower())
                 return name.endswith(self.value)
             elif self.mode == FileNameMatchMode.REGEX_INCLUDE:
