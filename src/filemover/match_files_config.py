@@ -2,7 +2,26 @@ from enum import Enum
 import os
 import re
 
-class FileTypeMatchType(Enum):
+class FileMatchType(Enum):
+    FILE_TYPE = "file_type"
+    FILE_NAME = "file_name"
+
+    @classmethod
+    def from_string(cls, position: str) -> 'FileMatchType':
+        if position.lower() not in cls._value2member_map_:
+            raise ValueError(f"Invalid position: {position}. Must be one of {list(cls._value2member_map_.keys())}")
+        return FileMatchType(cls._value2member_map_[position])
+    
+    @property
+    def description(self) -> str:
+        if self == FileMatchType.FILE_TYPE:
+            return "Match file types"
+        elif self == FileMatchType.FILE_NAME:
+            return "Match file names"
+        else:
+            return "UNKNOWN"
+
+class FileTypeMatchMode(Enum):
     SINGLE_EXACT = "single_exact"
     MULTIPLE_EXACT = "multiple_exact"
     REGEX_INCLUDE = "regex_include"
@@ -82,13 +101,12 @@ class FileMatchRuleOperator(Enum):
 
 class FileMatchRule:
     def __init__(self, **kwargs) -> None:
-        types = ["file_type", "file_name"]
         type = kwargs.get("type")
         if not type:
             raise ValueError("Missing parameter ""type"" from File Match rule")
-        if type not in types:
-            raise ValueError(f'Parameter "type" must be one of the following values: {', '.join(types)}')
-        self.type = types[types.index(type)]
+        if type not in FileMatchType:
+            raise ValueError(f'Parameter "type" must be one of the following values: {', '.join([member.value for member in FileMatchType])}')
+        self.type = FileMatchType.from_string(type)
         
         mode = kwargs.get("mode")
         if not mode:
@@ -112,24 +130,24 @@ class FileMatchRule:
         name, extension = os.path.splitext(file_path)
         extension = extension[1:]
 
-        if self.type == "file_type":
+        if self.type == FileMatchType.FILE_TYPE:
             if self.mode == FileTypeMatchMode.SINGLE_EXACT:
                 if not isinstance(self.value, str):
-                    raise ValueError(f'Invalid File Match Rule type. "file_type" rule "value" must be a string for "{FileTypeMatchMode.SINGLE_EXACT.value}"')
+                    raise ValueError(f'Invalid File Match Rule type. "{self.mode.value}" rule "value" must be a string for "{self.type.value}"')
                 return extension == self.value
             elif self.mode == FileTypeMatchMode.MULTIPLE_EXACT:
                 if not isinstance(self.value, list):
-                    raise ValueError(f'Invalid File Match Rule type. "file_type" rule "value" must be a list for "{FileTypeMatchMode.MULTIPLE_EXACT.value}"')
+                    raise ValueError(f'Invalid File Match Rule type. "{self.mode.value}" rule "value" must be a list for "{self.type.value}"')
                 return extension in self.value
             elif self.mode == FileTypeMatchMode.REGEX_INCLUDE:
                 if not isinstance(self.value, str):
-                    raise ValueError(f'Invalid File Match Rule type. "file_type" rule "value" must be a string for "{FileTypeMatchMode.REGEX_INCLUDE.value}"')
+                    raise ValueError(f'Invalid File Match Rule type. "{self.mode.value}" rule "value" must be a string for "{self.type.value}"')
                 return re.match(self.value, extension) is not None
             elif self.mode == FileTypeMatchMode.REGEX_EXCLUDE:
                 if not isinstance(self.value, str):
-                    raise ValueError(f'Invalid File Match Rule type. "file_type" rule "value" must be a string for "{FileTypeMatchMode.REGEX_EXCLUDE.value}"')
+                    raise ValueError(f'Invalid File Match Rule type. "{self.mode.value}" rule "value" must be a string for "{self.type.value}"')
                 return re.match(self.value, extension) is None
-        elif self.type == "file_name":
+        elif self.type == FileMatchType.FILE_NAME:
             if self.mode == FileNameMatchMode.SINGLE_EXACT:
                 if self.case_sensitive:
                     return name.lower() == self.value.lower()
