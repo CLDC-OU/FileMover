@@ -98,6 +98,7 @@ class FileMatchRule:
             self.mode = FileTypeMatchMode.from_string(mode)
         elif self.type == FileMatchType.FILE_NAME:
             self.mode = FileNameMatchMode.from_string(mode)
+            self.case_sensitive = kwargs.get("case_sensitive", True)
         else:
             raise ValueError("Invalid File Match Rule type")
 
@@ -130,14 +131,24 @@ class FileMatchRule:
                 return re.match(self.value, extension) is None
         elif self.type == "file_name":
             if self.mode == FileNameMatchMode.SINGLE_EXACT:
+                if self.case_sensitive:
+                    return name.lower() == self.value.lower()
                 return name == self.value
             elif self.mode == FileNameMatchMode.MULTIPLE_EXACT:
+                if self.case_sensitive:
+                    return name.lower() in [v.lower() for v in self.value]
                 return name in self.value
             elif self.mode == FileNameMatchMode.CONTAINS:
+                if self.case_sensitive:
+                    return self.value.lower() in name.lower()
                 return self.value in name
             elif self.mode == FileNameMatchMode.STARTS_WITH:
+                if self.case_sensitive:
+                    return name.lower().startswith(self.value.lower())
                 return name.startswith(self.value)
             elif self.mode == FileNameMatchMode.ENDS_WITH:
+                if self.case_sensitive:
+                    return name.lower().endswith(self.value.lower())
                 return name.endswith(self.value)
             elif self.mode == FileNameMatchMode.REGEX_INCLUDE:
                 return re.match(self.value, name) is not None
