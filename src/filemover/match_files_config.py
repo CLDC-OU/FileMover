@@ -123,6 +123,20 @@ class FileMatchRule:
         value = kwargs.get("value")
         if not value:
             raise ValueError("Missing parameter ""value"" from File Match rule")
+        
+        if not isinstance(value, str) \
+                and self.mode in [
+                    FileNameMatchMode.SINGLE_EXACT, FileNameMatchMode.CONTAINS, FileNameMatchMode.STARTS_WITH, FileNameMatchMode.ENDS_WITH, FileNameMatchMode.REGEX_INCLUDE, FileNameMatchMode.REGEX_EXCLUDE, 
+                    FileTypeMatchMode.SINGLE_EXACT, FileTypeMatchMode.REGEX_INCLUDE, FileTypeMatchMode.REGEX_EXCLUDE
+                ]:
+            raise ValueError("Invalid \"value\" type for specified \"mode\". A string type matching mode was specified, but the specified \"value\" is not a list")
+        if not isinstance(value, list) \
+                and self.mode in [
+                    FileNameMatchMode.MULTIPLE_EXACT, 
+                    FileTypeMatchMode.MULTIPLE_EXACT
+                ]:
+            raise ValueError("Invalid \"value\" type for specified \"mode\". A list type matching mode was specified, but the specified \"value\" is not a list")
+
         self.value = value
         
     
@@ -149,6 +163,8 @@ class FileMatchRule:
                 return re.match(self.value, extension) is None
         elif self.type == FileMatchType.FILE_NAME:
             if self.mode == FileNameMatchMode.SINGLE_EXACT:
+                if not isinstance(self.value, str):
+                    raise ValueError("Invalid \"value\" type for specified match mode")
                 if self.case_sensitive:
                     return name.lower() == self.value.lower()
                 return name == self.value
@@ -157,20 +173,30 @@ class FileMatchRule:
                     return name.lower() in [v.lower() for v in self.value]
                 return name in self.value
             elif self.mode == FileNameMatchMode.CONTAINS:
+                if not isinstance(self.value, str):
+                    raise ValueError("Invalid \"value\" type for specified match mode")
                 if self.case_sensitive:
                     return self.value.lower() in name.lower()
                 return self.value in name
             elif self.mode == FileNameMatchMode.STARTS_WITH:
+                if not isinstance(self.value, str):
+                    raise ValueError("Invalid \"value\" type for specified match mode")
                 if self.case_sensitive:
                     return name.lower().startswith(self.value.lower())
                 return name.startswith(self.value)
             elif self.mode == FileNameMatchMode.ENDS_WITH:
+                if not isinstance(self.value, str):
+                    raise ValueError("Invalid \"value\" type for specified match mode")
                 if self.case_sensitive:
                     return name.lower().endswith(self.value.lower())
                 return name.endswith(self.value)
             elif self.mode == FileNameMatchMode.REGEX_INCLUDE:
+                if not isinstance(self.value, str):
+                    raise ValueError("Invalid \"value\" type for specified match mode")
                 return re.match(self.value, name) is not None
             elif self.mode == FileNameMatchMode.REGEX_EXCLUDE:
+                if not isinstance(self.value, str):
+                    raise ValueError("Invalid \"value\" type for specified match mode")
                 return re.match(self.value, name) is None
         else:
             raise ValueError("Invalid File Match Rule type")
