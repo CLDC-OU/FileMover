@@ -9,25 +9,25 @@ class FileTypeMatchType(Enum):
     REGEX_EXCLUDE = "regex_exclude"
 
     @classmethod
-    def from_string(cls, position: str) -> 'FileTypeMatchType':
+    def from_string(cls, position: str) -> 'FileTypeMatchMode':
         if position.lower() not in cls._value2member_map_:
             raise ValueError(f"Invalid position: {position}. Must be one of {list(cls._value2member_map_.keys())}")
-        return FileTypeMatchType(cls._value2member_map_[position])
+        return FileTypeMatchMode(cls._value2member_map_[position])
     
     @property
     def description(self) -> str:
-        if self == FileTypeMatchType.SINGLE_EXACT:
+        if self == FileTypeMatchMode.SINGLE_EXACT:
             return "Match file types with a single extension"
-        elif self == FileTypeMatchType.MULTIPLE_EXACT:
+        elif self == FileTypeMatchMode.MULTIPLE_EXACT:
             return "Match file types among a list of extensions"
-        elif self == FileTypeMatchType.REGEX_INCLUDE:
+        elif self == FileTypeMatchMode.REGEX_INCLUDE:
             return "Match file types using a regular expression"
-        elif self == FileTypeMatchType.REGEX_EXCLUDE:
+        elif self == FileTypeMatchMode.REGEX_EXCLUDE:
             return "Match file types that aren't matched by a regular expression"
         else:
             return "UNKNOWN"
 
-class FileNameMatchType(Enum):
+class FileNameMatchMode(Enum):
     SINGLE_EXACT = "single_exact"
     MULTIPLE_EXACT = "multiple_exact"
     CONTAINS = "contains"
@@ -37,26 +37,26 @@ class FileNameMatchType(Enum):
     REGEX_EXCLUDE = "regex_exclude"
 
     @classmethod
-    def from_string(cls, position: str) -> 'FileNameMatchType':
+    def from_string(cls, position: str) -> 'FileNameMatchMode':
         if position.lower() not in cls._value2member_map_:
             raise ValueError(f"Invalid position: {position}. Must be one of {list(cls._value2member_map_.keys())}")
-        return FileNameMatchType(cls._value2member_map_[position])
+        return FileNameMatchMode(cls._value2member_map_[position])
     
     @property
     def description(self) -> str:
-        if self == FileNameMatchType.SINGLE_EXACT:
+        if self == FileNameMatchMode.SINGLE_EXACT:
             return "Match files with a single exact name"
-        elif self == FileNameMatchType.MULTIPLE_EXACT:
+        elif self == FileNameMatchMode.MULTIPLE_EXACT:
             return "Match files among a list of exact names"
-        elif self == FileNameMatchType.CONTAINS:
+        elif self == FileNameMatchMode.CONTAINS:
             return "Match files with a name containing a specific substring"
-        elif self == FileNameMatchType.STARTS_WITH:
+        elif self == FileNameMatchMode.STARTS_WITH:
             return "Match files with a name that starts with a specific substring"
-        elif self == FileNameMatchType.ENDS_WITH:
+        elif self == FileNameMatchMode.ENDS_WITH:
             return "Match files with a name that ends with a specific substring"
-        elif self == FileNameMatchType.REGEX_INCLUDE:
+        elif self == FileNameMatchMode.REGEX_INCLUDE:
             return "Match files with a name that matches a regular expression"
-        elif self == FileNameMatchType.REGEX_EXCLUDE:
+        elif self == FileNameMatchMode.REGEX_EXCLUDE:
             return "Match files that have a name that doesn't match a regular expression"
         else:
             return "UNKNOWN"
@@ -94,14 +94,12 @@ class FileMatchRule:
         if not mode:
             raise ValueError("Missing parameter ""mode"" from File Match rule")
 
-        if self.type == "file_type":
-            self.mode = FileTypeMatchType.from_string(mode)
-        elif self.type == "file_name":
-            self.mode = FileNameMatchType.from_string(mode)
+        if self.type == FileMatchType.FILE_TYPE:
+            self.mode = FileTypeMatchMode.from_string(mode)
+        elif self.type == FileMatchType.FILE_NAME:
+            self.mode = FileNameMatchMode.from_string(mode)
         else:
             raise ValueError("Invalid File Match Rule type")
-        
-        
 
         value = kwargs.get("value")
         if not value:
@@ -114,36 +112,36 @@ class FileMatchRule:
         extension = extension[1:]
 
         if self.type == "file_type":
-            if self.mode == FileTypeMatchType.SINGLE_EXACT:
+            if self.mode == FileTypeMatchMode.SINGLE_EXACT:
                 if not isinstance(self.value, str):
-                    raise ValueError(f'Invalid File Match Rule type. "file_type" rule "value" must be a string for "{FileTypeMatchType.SINGLE_EXACT.value}"')
+                    raise ValueError(f'Invalid File Match Rule type. "file_type" rule "value" must be a string for "{FileTypeMatchMode.SINGLE_EXACT.value}"')
                 return extension == self.value
-            elif self.mode == FileTypeMatchType.MULTIPLE_EXACT:
+            elif self.mode == FileTypeMatchMode.MULTIPLE_EXACT:
                 if not isinstance(self.value, list):
-                    raise ValueError(f'Invalid File Match Rule type. "file_type" rule "value" must be a list for "{FileTypeMatchType.MULTIPLE_EXACT.value}"')
+                    raise ValueError(f'Invalid File Match Rule type. "file_type" rule "value" must be a list for "{FileTypeMatchMode.MULTIPLE_EXACT.value}"')
                 return extension in self.value
-            elif self.mode == FileTypeMatchType.REGEX_INCLUDE:
+            elif self.mode == FileTypeMatchMode.REGEX_INCLUDE:
                 if not isinstance(self.value, str):
-                    raise ValueError(f'Invalid File Match Rule type. "file_type" rule "value" must be a string for "{FileTypeMatchType.REGEX_INCLUDE.value}"')
+                    raise ValueError(f'Invalid File Match Rule type. "file_type" rule "value" must be a string for "{FileTypeMatchMode.REGEX_INCLUDE.value}"')
                 return re.match(self.value, extension) is not None
-            elif self.mode == FileTypeMatchType.REGEX_EXCLUDE:
+            elif self.mode == FileTypeMatchMode.REGEX_EXCLUDE:
                 if not isinstance(self.value, str):
-                    raise ValueError(f'Invalid File Match Rule type. "file_type" rule "value" must be a string for "{FileTypeMatchType.REGEX_EXCLUDE.value}"')
+                    raise ValueError(f'Invalid File Match Rule type. "file_type" rule "value" must be a string for "{FileTypeMatchMode.REGEX_EXCLUDE.value}"')
                 return re.match(self.value, extension) is None
         elif self.type == "file_name":
-            if self.mode == FileNameMatchType.SINGLE_EXACT:
+            if self.mode == FileNameMatchMode.SINGLE_EXACT:
                 return name == self.value
-            elif self.mode == FileNameMatchType.MULTIPLE_EXACT:
+            elif self.mode == FileNameMatchMode.MULTIPLE_EXACT:
                 return name in self.value
-            elif self.mode == FileNameMatchType.CONTAINS:
+            elif self.mode == FileNameMatchMode.CONTAINS:
                 return self.value in name
-            elif self.mode == FileNameMatchType.STARTS_WITH:
+            elif self.mode == FileNameMatchMode.STARTS_WITH:
                 return name.startswith(self.value)
-            elif self.mode == FileNameMatchType.ENDS_WITH:
+            elif self.mode == FileNameMatchMode.ENDS_WITH:
                 return name.endswith(self.value)
-            elif self.mode == FileNameMatchType.REGEX_INCLUDE:
+            elif self.mode == FileNameMatchMode.REGEX_INCLUDE:
                 return re.match(self.value, name) is not None
-            elif self.mode == FileNameMatchType.REGEX_EXCLUDE:
+            elif self.mode == FileNameMatchMode.REGEX_EXCLUDE:
                 return re.match(self.value, name) is None
         else:
             raise ValueError("Invalid File Match Rule type")

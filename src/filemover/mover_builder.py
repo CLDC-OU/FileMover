@@ -1,6 +1,6 @@
 from src.filemover.rename_config import TimestampPosition
 from src.filemover.mover_config import KeepSourceBehavior, CollisionAvoidanceBehavior, DestinationCollisionBehavior
-from src.filemover.match_files_config import FileNameMatchType, FileTypeMatchType, FileMatchRuleOperator
+from src.filemover.match_files_config import FileNameMatchMode, FileTypeMatchMode, FileMatchRuleOperator
 
 from colorama import Fore, Style
 import os
@@ -509,13 +509,13 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         prompt_map = {}
         option_map = {}
         option_map[''] = None
-        for i in range(len(FileTypeMatchType)):
-            prompt_map[f"{i}"] = list(FileTypeMatchType)[i].description
-            option_map[f"{i}"] = list(FileTypeMatchType)[i].value
+        for i in range(len(FileTypeMatchMode)):
+            prompt_map[f"{i}"] = list(FileTypeMatchMode)[i].description
+            option_map[f"{i}"] = list(FileTypeMatchMode)[i].value
 
         menu_option = self._repeat_prompt_until_valid(
             lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file type filter{Style.RESET_ALL} would you like to configure?", prompt_map)).strip(),
-            input_condition=lambda x: x in [str(v) for v in range(len(FileTypeMatchType))],
+            input_condition=lambda x: x in [str(v) for v in range(len(FileTypeMatchMode))],
             invalid_message="Please enter a valid menu option"
         )
         if menu_option == '0':
@@ -567,13 +567,13 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         prompt_map = {}
         option_map = {}
         option_map[''] = None
-        for i in range(len(FileNameMatchType)):
-            prompt_map[f"{i}"] = list(FileNameMatchType)[i].description
-            option_map[f"{i}"] = list(FileNameMatchType)[i].value
+        for i in range(len(FileNameMatchMode)):
+            prompt_map[f"{i}"] = list(FileNameMatchMode)[i].description
+            option_map[f"{i}"] = list(FileNameMatchMode)[i].value
 
         menu_option = self._repeat_prompt_until_valid(
             lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file name filter{Style.RESET_ALL} would you like to configure?", prompt_map)).strip(),
-            input_condition=lambda x: x in [str(v) for v in range(len(FileNameMatchType))],
+            input_condition=lambda x: x in [str(v) for v in range(len(FileNameMatchMode))],
             invalid_message="Please enter a valid menu option"
         )
         if menu_option == '0':
