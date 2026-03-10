@@ -3,7 +3,6 @@ from .mover_config import MoverConfig, DestinationCollisionBehavior, KeepSourceB
 from .logger import logger
 import shutil
 import os
-import re
 
 class Mover:
     def __init__(self, **kwargs):
@@ -15,36 +14,10 @@ class Mover:
     def __repr__(self):
         return f"Mover(name={self.config.mover_name}, description={self.config.mover_description})"
 
-    def _should_move_file(self, file_name):
-        if not file_name:
+    def _should_move_file(self, file_path):
+        if not file_path:
             return False
-        
-        file_type = os.path.splitext(file_name)[1][1:]  # Get file extension without dot
-        file_name = os.path.splitext(file_name)[0]
-
-        # Verify file type
-        if self.config.file_types and not any(file_type == ext for ext in self.config.file_types):
-            return False
-        if self.config.file_type_regex and not re.match(self.config.file_type_regex, file_type):
-            return False
-        if self.config.file_type_exclude_regex and re.match(self.config.file_type_exclude_regex, file_type):
-            return False
-
-        # Verify file name
-        if self.config.file_names and file_name not in self.config.file_names:
-            return False
-        if self.config.file_name_regex and not re.match(self.config.file_name_regex, file_name):
-            return False
-        if self.config.file_name_exclude_regex and re.match(self.config.file_name_exclude_regex, file_name):
-            return False
-        if self.config.file_name_contains and self.config.file_name_contains not in file_name:
-            return False
-        if self.config.file_name_starts_with and not file_name.startswith(self.config.file_name_starts_with):
-            return False
-        if self.config.file_name_ends_with and not file_name.endswith(self.config.file_name_ends_with):
-            return False
-        
-        return True
+        return self.config.match_files_config.matches_file(file_path)
 
     def _copy_file(self, source_file_path, destination_file_path):
         destination_directory = os.path.dirname(destination_file_path)

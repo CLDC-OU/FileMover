@@ -3,8 +3,22 @@
     "mover_description": "This mover will move all csv files that start with 'Example_File' from the Documents directory to the Data directory and rename them to 'Prefix_{timestamp}_Renamed_Document_Suffix.csv'",
     "source_directory": "%HOMEPATH%\\Documents",
     "destination_directory": "D:\\Data",
-    "file_type": "csv",
-    "file_name": "Example_File*",
+    "match_files": {
+        "enabled": true,
+        "operator": "and",
+        "rules": [
+            {
+                "type": "file_type",
+                "mode": "single_exact",
+                "value": "csv"
+            },
+            {
+                "type": "file_name",
+                "mode": "starts_with",
+                "value": "Example_File"
+            }
+        ]
+    },
     "rename": {
         "enabled": true,
         "replace": [

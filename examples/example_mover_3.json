@@ -3,8 +3,22 @@
     "mover_description": "This mover will move all Excel files (including .xlsx, .xls, .xltx, .xlt) that match the regex 'excel_.*_.*' from the Documents directory to the Data directory and rename them to 'renamed_{timestamp}_{rest of name}.{extension}'",
     "source_directory": "%HOMEPATH%\\Documents",
     "destination_directory": "D:\\Data",
-    "file_type_regex": "xl(s|t)x?$",
-    "file_name_regex": "excel_.*_.*",
+    "match_files": {
+        "enabled": true,
+        "operator": "and",
+        "rules": [
+            {
+                "type": "file_type",
+                "mode": "regex_include",
+                "value": "xl(s|t)x?$"
+            },
+            {
+                "type": "file_name",
+                "mode": "regex_include",
+                "value": "excel_.*_.*"
+            }
+        ]
+    },
     "rename": {
         "enabled": true,
         "replace": [

@@ -1,5 +1,6 @@
 from src.filemover.rename_config import TimestampPosition
 from src.filemover.mover_config import KeepSourceBehavior, CollisionAvoidanceBehavior, DestinationCollisionBehavior
+from src.filemover.match_files_config import FileNameMatchType, FileTypeMatchType, FileMatchRuleOperator
 
 from colorama import Fore, Style
 import os
@@ -101,6 +102,17 @@ class MoverConfigBuilder:
             return False
         return True
 
+    def _try_set_match_files_option(self, option, value):
+        try:
+            if option == 'operator':
+                self.set_match_files_operator(value)
+            else:
+                raise ValueError(f"{ERROR_COLOR}Unknown match files option '{option}'")
+        except ValueError as e:
+            print(e)
+            return False
+        return True
+
     def _try_set_rename_option(self, option, value):
         try:
             if option == 'case_sensitive':
@@ -131,6 +143,12 @@ class MoverConfigBuilder:
             return False
         return True
 
+    def _create_or_get_match_files(self):
+        match_files = self.config.get("match_files")
+        if not match_files:
+            match_files = {}
+            match_files["enabled"] = True
+        return match_files
     def _create_or_get_rename(self):
         rename = self.config.get("rename")
         if not rename:
@@ -150,6 +168,30 @@ class MoverConfigBuilder:
         print(f"{SET_INFO_COLOR}Set {f'{value_detail} ' if value_detail else ''}{SET_PARAMETER_COLOR}{option}{Style.RESET_ALL}{SET_INFO_COLOR} to {SET_VALUE_COLOR}{value}{Style.RESET_ALL}\n")
 
 #=====Config Value Setters==================================
+    def set_match_files_operator(self, value):
+        if value not in [member.value for member in FileMatchRuleOperator]:
+            raise ValueError(f"{ERROR_COLOR}Invalid match files operator: {value}. Must be one of {', '.join([member.value for member in FileMatchRuleOperator])}{Style.RESET_ALL}")
+
+        match_file = self._create_or_get_match_files()
+        match_file['operator'] = value
+        self.config['match_files'] = match_file
+        self._print_set_message("Operator", value, 'match file')
+        return self
+    def add_match_files_rule(self, value):
+        if not 'type' in value:
+            raise ValueError(f"{ERROR_COLOR}Type must not be blank in match files rule{Style.RESET_ALL}")
+        if not 'mode' in value:
+            raise ValueError(f"{ERROR_COLOR}Mode must not be blank in match files rule{Style.RESET_ALL}")
+        if not 'value' in value:
+            raise ValueError(f"{ERROR_COLOR}Value must not be blank in match files rule{Style.RESET_ALL}")
+        match_files = self._create_or_get_match_files()
+        if 'rules' not in match_files:
+            match_files['rules'] = []
+        match_files['rules'].append(value)
+        self.config['match_files'] = match_files
+        print(f"{SET_INFO_COLOR}Added match files rule: {SET_PARAMETER_COLOR}Type{SET_INFO_COLOR}: {SET_VALUE_COLOR}{value['type']}{SET_INFO_COLOR}, {SET_PARAMETER_COLOR}Mode{SET_INFO_COLOR}: {SET_VALUE_COLOR}{value['mode']}{SET_INFO_COLOR}, {SET_PARAMETER_COLOR}Value{SET_INFO_COLOR}: {SET_VALUE_COLOR}{value['value']}{Style.RESET_ALL}")
+        return self
+
     def set_rename_case_sensitive(self, value):
         if not isinstance(value, bool):
             raise ValueError(f"{ERROR_COLOR}Case Sensitive must be a boolean value{Style.RESET_ALL}")
@@ -464,290 +506,142 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
 
     # ===== Filters =====
     def _interactive_file_type_filter(self):
+        prompt_map = {}
+        option_map = {}
+        option_map[''] = None
+        for i in range(len(FileTypeMatchType)):
+            prompt_map[f"{i}"] = list(FileTypeMatchType)[i].description
+            option_map[f"{i}"] = list(FileTypeMatchType)[i].value
+
         menu_option = self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file type filter{Style.RESET_ALL} would you like to configure?", {'0': 'Single File Type', '1': 'Multiple File Types', '2': 'Regex (include)', '3': 'Regex (exclude)', '4': 'Cancel (return to filter menu)'})).strip(),
-            input_condition=lambda x: x in ['0', '1', '2', '3', '4'],
+            lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file type filter{Style.RESET_ALL} would you like to configure?", prompt_map)).strip(),
+            input_condition=lambda x: x in [str(v) for v in range(len(FileTypeMatchType))],
             invalid_message="Please enter a valid menu option"
         )
         if menu_option == '0':
             # Single File Type
-            continue_update = True
-            override_multi = False
-            update_multi = False
-            if 'file_type' in self.config:
-                menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Type{Style.RESET_ALL}{WARNING_COLOR} filter. Would you like to override it?{Style.RESET_ALL}", {'0': 'No (cancel)', '1': 'Yes'})).strip(),
-                    input_condition=lambda x: x in ['0', '1'],
-                    invalid_message="Please enter a valid menu option"
-                )
-                if menu_option == '1':
-                    continue_update = True
-                elif menu_option == '0':
-                    continue_update = False
-            if 'file_types' in self.config:
-                
-                menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Type{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip(),
-                    input_condition=lambda x: x in ['0', '1', '2'],
-                    invalid_message="Please enter a valid menu option"
-                )
-                if menu_option == '0':
-                    continue_update = True
-                    override_multi = True
-                elif menu_option == '1':
-                    continue_update = True
-                    update_multi = True
-                elif menu_option == '2':
-                    continue_update = False
-
-            if continue_update:
+            value = self._repeat_prompt_until_valid(
+                lambda: input(f"Enter a {PARAMETER_COLOR}file type{Style.RESET_ALL} (without the preceding '.'): ").strip().lower(),
+                input_condition=lambda x: x.isalnum(),
+                invalid_message="Please enter a valid file type (alphanumeric characters only, no spaces or dots)"
+            )
+        elif menu_option == '1':
+            # Multiple File Type
+            value = []
+            while True:
                 file_type = self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter a {PARAMETER_COLOR}file type{Style.RESET_ALL} (without the preceding '.'): ").strip().lower(),
+                    lambda: input(f"Enter a {PARAMETER_COLOR}file type{Style.RESET_ALL} (without the preceding '.') or 'done' to finish: ").strip().lower(),
                     input_condition=lambda x: x.isalnum(),
                     invalid_message="Please enter a valid file type (alphanumeric characters only, no spaces or dots)"
                 )
-                if override_multi:
-                    self.config.pop('file_types', None)
-                    self.config['file_type'] = file_type
-                    self._print_set_message("File Type", file_type)
-                elif update_multi:
-                    self.config['file_types'].append(file_type)
-                    self._print_set_message("File Types", self.config['file_types'])
+                if file_type == 'done':
+                    if not len(self.config['file_types']) > 0:
+                        print(f"{ERROR_COLOR}At least one file type must be specified{Style.RESET_ALL}")
+                        continue
+                    break
+                elif file_type in self.config['file_types']:
+                    print(f"{VALUE_COLOR}{file_type}{Style.RESET_ALL} already included in {PARAMETER_COLOR}file types{Style.RESET_ALL}")
                 else:
-                    self.config['file_type'] = file_type
-                    self._print_set_message("File Type", file_type)
-        elif menu_option == '1':
-            # Multiple File Type
-            continue_update = True
-            override_single = False
-            update_single = False
-            override_multi = False
-            update_multi = False
-            if 'file_types' in self.config:
-                menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Type Filter{Style.RESET_ALL}{WARNING_COLOR}. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip(),
-                    input_condition=lambda x: x in ['0', '1', '2'],
-                    invalid_message="Please enter a valid menu option"
-                )
-                if menu_option == '0':
-                    continue_update = True
-                    override_multi = True
-                elif menu_option == '1':
-                    continue_update = True
-                    update_multi = True
-                elif menu_option == '2':
-                    continue_update = False
-            if 'file_type' in self.config:
-                
-                menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Type Filter{Style.RESET_ALL}{WARNING_COLOR}. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip(),
-                    input_condition=lambda x: x in ['0', '1', '2'],
-                    invalid_message="Please enter a valid menu option"
-                )
-                if menu_option == '0':
-                    continue_update = True
-                    override_single = True
-                elif menu_option == '1':
-                    continue_update = True
-                    update_single = True
-                elif menu_option == '2':
-                    continue_update = False
-            if continue_update:
-                if override_multi or not update_multi:
-                    self.config['file_types'] = []
-                if override_single:
-                    self.config.pop('file_type', None)
-                if update_single:
-                    self.config['file_types'].append(self.config['file_type'])
-                    self.config.pop('file_type', None)
-
-                while True:
-                    file_type = self._repeat_prompt_until_valid(
-                        lambda: input(f"Enter a {PARAMETER_COLOR}file type{Style.RESET_ALL} (without the preceding '.') or 'done' to finish: ").strip().lower(),
-                        input_condition=lambda x: x.isalnum(),
-                        invalid_message="Please enter a valid file type (alphanumeric characters only, no spaces or dots)"
-                    )
-                    if file_type == 'done':
-                        if not len(self.config['file_types']) > 0:
-                            print(f"{ERROR_COLOR}At least one file type must be specified{Style.RESET_ALL}")
-                            continue
-                        break
-                    elif file_type in self.config['file_types']:
-                        print(f"{VALUE_COLOR}{file_type}{Style.RESET_ALL} already included in {PARAMETER_COLOR}file types{Style.RESET_ALL}")
-                    else:
-                        self.config['file_types'].append(file_type)
-                self._print_set_message("File Types", self.config['file_types'])
-                
+                    value.append(file_type)
         elif menu_option == '2':
             # Regex (include) File Type
-            self._repeat_prompt_until_valid(
+            value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a regular expression to match {PARAMETER_COLOR}file type{Style.RESET_ALL}: ").strip(),
-                input_condition=lambda x: self._try_set_option('file_type_regex', x),
+                input_condition=lambda x: self._is_valid_regex(x),
                 invalid_message="The specified input is not a valid regular expression"
             )
         elif menu_option == '3':
             # Regex (exclude) File Type
-            self._repeat_prompt_until_valid(
+            value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a regular expression to exclude {PARAMETER_COLOR}file type{Style.RESET_ALL}: ").strip(),
-                input_condition=lambda x: self._try_set_option('file_type_exclude_regex', x),
+                input_condition=lambda x: self._is_valid_regex(x),
                 invalid_message="The specified input is not a valid regular expression"
             )
         elif menu_option == '4':
             return
+        else:
+            raise ValueError("Unhandled or unknown file type filter type")
+        
+        self.add_match_files_rule({'type': 'file_type', 'mode': option_map.get(menu_option), 'value': value})
     def _interactive_file_name_filter(self):
+        prompt_map = {}
+        option_map = {}
+        option_map[''] = None
+        for i in range(len(FileNameMatchType)):
+            prompt_map[f"{i}"] = list(FileNameMatchType)[i].description
+            option_map[f"{i}"] = list(FileNameMatchType)[i].value
+
         menu_option = self._repeat_prompt_until_valid(
-            lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file name filter{Style.RESET_ALL} would you like to configure?", {'0': 'Single Exact Name', '1': 'Multiple Exact Names', '2': 'Contains', '3': 'Starts With', '4': 'Ends With', '5': 'Regex (include)', '6': 'Regex (exclude)', '7': 'Cancel (return to filter menu)'})).strip(),
-            input_condition=lambda x: x in ['0', '1', '2', '3', '4', '5', '6', '7'],
+            lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file name filter{Style.RESET_ALL} would you like to configure?", prompt_map)).strip(),
+            input_condition=lambda x: x in [str(v) for v in range(len(FileNameMatchType))],
             invalid_message="Please enter a valid menu option"
         )
         if menu_option == '0':
             # Single Exact Name
-            continue_update = True
-            override_multi = False
-            update_multi = False
-            if 'file_name' in self.config:
-                
-                menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Name{Style.RESET_ALL}{WARNING_COLOR} filter. Would you like to override it?{Style.RESET_ALL}", {'0': 'No (cancel)', '1': 'Yes'})).strip(),
-                    input_condition=lambda x: x in ['0', '1'],
-                    invalid_message="Please enter a valid menu option"
-                )
-                if menu_option == '1':
-                    continue_update = True
-                elif menu_option == '0':
-                    continue_update = False
-            if 'file_names' in self.config:
-                
-                menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Name{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip(),
-                    input_condition=lambda x: x in ['0', '1', '2'],
-                    invalid_message="Please enter a valid menu option"
-                )
-                if menu_option == '0':
-                    continue_update = True
-                    override_multi = True
-                elif menu_option == '1':
-                    continue_update = True
-                    update_multi = True
-                elif menu_option == '2':
-                    continue_update = False
-
-            if continue_update:
+            value = self._repeat_prompt_until_valid(
+                lambda: input(f"Enter a {PARAMETER_COLOR}file name{Style.RESET_ALL} {Fore.BLACK}(note: do not include a file type extension - it will not be matched by this filter){Style.RESET_ALL}: ").strip(),
+                input_condition=lambda x: len(x) > 0,
+                invalid_message="Please enter a valid file name"
+            )
+        elif menu_option == '1':
+            # Multiple Exact Name
+            value = []
+            while True:
                 file_name = self._repeat_prompt_until_valid(
-                    lambda: input(f"Enter a {PARAMETER_COLOR}file name{Style.RESET_ALL} {Fore.BLACK}(note: do not include a file type extension - it will not be matched by this filter){Style.RESET_ALL}: ").strip(),
+                    lambda: input(f"Enter a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension) or 'done' to finish: ").strip(),
                     input_condition=lambda x: len(x) > 0,
                     invalid_message="Please enter a valid file name"
                 )
-                if override_multi:
-                    self.config.pop('file_names', None)
-                    self.config['file_name'] = file_name
-                    self._print_set_message("File Name", file_name)
-                elif update_multi:
-                    self.config['file_names'].append(file_name)
-                    self._print_set_message("File Names", self.config['file_names'])
+                if file_name.lower() == 'done':
+                    if not len(value) > 0:
+                        print(f"{ERROR_COLOR}At least one file name must be specified{Style.RESET_ALL}")
+                        continue
+                    break
+                elif file_name in value:
+                    print(f"{VALUE_COLOR}{file_name}{Style.RESET_ALL} already included in {PARAMETER_COLOR}file names{Style.RESET_ALL}")
                 else:
-                    self.config['file_name'] = file_name
-                    self._print_set_message("File Name", file_name)
-                
-        elif menu_option == '1':
-            # Multiple Exact Name
-            continue_update = True
-            override_single = False
-            update_single = False
-            override_multi = False
-            update_multi = False
-            if 'file_names' in self.config:
-                menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Multiple File Name{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip(),
-                    input_condition=lambda x: x in ['0', '1', '2'],
-                    invalid_message="Please enter a valid menu option"
-                )
-                if menu_option == '0':
-                    continue_update = True
-                    override_multi = True
-                elif menu_option == '1':
-                    continue_update = True
-                    update_multi = True
-                elif menu_option == '2':
-                    continue_update = False
-            if 'file_name' in self.config:
-                menu_option = self._repeat_prompt_until_valid(
-                    lambda: input(self._get_menu_text(f"{WARNING_COLOR}You previously defined a {PARAMETER_COLOR}Single File Name{Style.RESET_ALL}{WARNING_COLOR} filter. How would you like to proceed?{Style.RESET_ALL}", {'0': 'Override it', '1': 'Add to it', '2': 'Cancel'})).strip(),
-                    input_condition=lambda x: x in ['0', '1', '2'],
-                    invalid_message="Please enter a valid menu option"
-                )
-                if menu_option == '0':
-                    continue_update = True
-                    override_single = True
-                elif menu_option == '1':
-                    continue_update = True
-                    update_single = True
-                elif menu_option == '2':
-                    continue_update = False
-            if continue_update:
-                if override_multi or not update_multi:
-                    self.config['file_names'] = []
-                if override_single:
-                    self.config.pop('file_name', None)
-                if update_single:
-                    self.config['file_names'].append(self.config['file_name'])
-                    self.config.pop('file_name', None)
-
-                while True:
-                    file_name = self._repeat_prompt_until_valid(
-                        lambda: input(f"Enter a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension) or 'done' to finish: ").strip(),
-                        input_condition=lambda x: len(x) > 0,
-                        invalid_message="Please enter a valid file name"
-                    )
-                    if file_name.lower() == 'done':
-                        if not len(self.config['file_names']) > 0:
-                            print(f"{ERROR_COLOR}At least one file name must be specified{Style.RESET_ALL}")
-                            continue
-                        break
-                    elif file_name in self.config['file_names']:
-                        print(f"{VALUE_COLOR}{file_name}{Style.RESET_ALL} already included in {PARAMETER_COLOR}file names{Style.RESET_ALL}")
-                    else:
-                        self.config['file_names'].append(file_name)
-                self._print_set_message("File Names", self.config['file_names'])
-                
+                    value.append(file_name)
         elif menu_option == '2':
             # Contains
-            self._repeat_prompt_until_valid(
+            value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a substring to match within a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension): ").strip(),
-                input_condition=lambda x: self._try_set_option('file_name_contains', x),
+                input_condition=lambda x: len(x) > 0,
                 invalid_message="Please enter a valid file name substring"
             )
         elif menu_option == '3':
             # Starts With
-            self._repeat_prompt_until_valid(
+            value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a substring to match the start of a {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip(),
-                input_condition=lambda x: self._try_set_option('file_name_starts_with', x),
+                input_condition=lambda x: len(x) > 0,
                 invalid_message="Please enter a valid file name substring"
             )
         elif menu_option == '4':
             # Ends With
-            self._repeat_prompt_until_valid(
+            value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a substring to match the end of a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension): ").strip(),
-                input_condition=lambda x: self._try_set_option('file_name_ends_with', x),
+                input_condition=lambda x: len(x) > 0,
                 invalid_message="Please enter a valid file name substring"
             )
         elif menu_option == '5':
             # Regex (include)
-            self._repeat_prompt_until_valid(
+            value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a regex pattern to match files by {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip(),
-                input_condition=lambda x: self._try_set_option('file_name_regex', x),
+                input_condition=lambda x: self._is_valid_regex(x),
                 invalid_message="The specified input is not a valid regular expression"
             )
-            
         elif menu_option == '6':
             # Regex (exclude)
-            self._repeat_prompt_until_valid(
+            value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a regex pattern to exclude files by {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip(),
-                input_condition=lambda x: self._try_set_option('file_name_exclude_regex', x),
+                input_condition=lambda x: self._is_valid_regex(x),
                 invalid_message="The specified input is not a valid regular expression"
             )
         elif menu_option == '7':
             return
+        else:
+            raise ValueError("Unhandled or unknown file name filter type")
+        self.add_match_files_rule({'type': 'file_name', 'mode': option_map.get(menu_option), 'value': value})
+
     def _interactive_filters(self):
         has_file_type_filter = False
         has_name_filter = False
@@ -772,10 +666,22 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
                         invalid_message="Please enter a valid menu option"
                     )
                     if menu_option == '1':
-                        return
+                        break
                     else:
                         continue
-                return
+                break
+        
+        prompt_map = {}
+        option_map = {}
+        option_map[''] = None
+        for i in range(len(FileMatchRuleOperator)):
+            prompt_map[f"{i}"] = list(FileMatchRuleOperator)[i].description
+            option_map[f"{i}"] = list(FileMatchRuleOperator)[i].value
+        self._repeat_prompt_until_valid(
+            lambda: input(self._get_menu_text(f"If multiple rules are defined, how should they be matched?", prompt_map)).strip().lower(),
+            input_condition=lambda x: self._try_set_match_files_option('operator', option_map.get(x)),
+            invalid_message="Please enter a valid menu option"
+        )
 
     # ===== Keep Source / Collisions =====
     def _interactive_keep_source_behavior(self):
