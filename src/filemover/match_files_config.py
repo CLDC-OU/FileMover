@@ -126,8 +126,8 @@ class FileMatchRule:
         self.value = value
         
     
-    def matches_file(self, file_path: str) -> bool:
-        name, extension = os.path.splitext(file_path)
+    def matches_filename(self, filename: str) -> bool:
+        name, extension = os.path.splitext(filename)
         extension = extension[1:]
 
         if self.type == FileMatchType.FILE_TYPE:
@@ -183,13 +183,13 @@ class FileMatchConfig:
         self.operator = FileMatchRuleOperator.from_string(kwargs.get("operator", "and"))
         self.rules = [FileMatchRule(**rule) for rule in kwargs.get('rules', [])]
     
-    def matches_file(self, file_path: str) -> bool:
+    def matches_filename(self, filename: str) -> bool:
         if not self.enabled:
             return True
         
         if self.operator == FileMatchRuleOperator.AND:
-            return all(rule.matches_file(file_path) for rule in self.rules)
+            return all(rule.matches_filename(filename) for rule in self.rules)
         elif self.operator == FileMatchRuleOperator.OR:
-            return any(rule.matches_file(file_path) for rule in self.rules)
+            return any(rule.matches_filename(filename) for rule in self.rules)
         
         raise ValueError("Invalid File Match configuration")

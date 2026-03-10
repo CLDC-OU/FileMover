@@ -17,7 +17,7 @@ class Mover:
     def _should_move_file(self, file_path):
         if not file_path:
             return False
-        return self.config.match_files_config.matches_file(file_path)
+        return self.config.match_files_config.matches_filename(file_path)
 
     def _copy_file(self, source_file_path, destination_file_path):
         destination_directory = os.path.dirname(destination_file_path)
