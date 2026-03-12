@@ -1,6 +1,6 @@
 from src.filemover.rename_config import TimestampPosition
 from src.filemover.mover_config import KeepSourceBehavior, CollisionAvoidanceBehavior, DestinationCollisionBehavior
-from src.filemover.match_files_config import FileNameMatchMode, FileTypeMatchMode, FileMatchRuleOperator
+from src.filemover.match_files_config import FileNameMatchMode, FileTypeMatchMode, FileMatchRuleOperator, FileMatchType
 
 from colorama import Fore, Style
 import os
@@ -515,17 +515,19 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
 
         menu_option = self._repeat_prompt_until_valid(
             lambda: input(self._get_menu_text(f"Which kind of {PARAMETER_COLOR}file type filter{Style.RESET_ALL} would you like to configure?", prompt_map)).strip(),
-            input_condition=lambda x: x in [str(v) for v in range(len(FileTypeMatchMode))],
+            input_condition=lambda x: x in [str(v) for v in range(len(option_map))],
             invalid_message="Please enter a valid menu option"
         )
-        if menu_option == '0':
+        selected_option = option_map.get(menu_option, None)
+        
+        if selected_option == FileTypeMatchMode.SINGLE_EXACT:
             # Single File Type
             value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a {PARAMETER_COLOR}file type{Style.RESET_ALL} (without the preceding '.'): ").strip().lower(),
                 input_condition=lambda x: x.isalnum(),
                 invalid_message="Please enter a valid file type (alphanumeric characters only, no spaces or dots)"
             )
-        elif menu_option == '1':
+        elif selected_option == FileTypeMatchMode.MULTIPLE_EXACT:
             # Multiple File Type
             value = []
             while True:
@@ -543,26 +545,26 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
                     print(f"{VALUE_COLOR}{file_type}{Style.RESET_ALL} already included in {PARAMETER_COLOR}file types{Style.RESET_ALL}")
                 else:
                     value.append(file_type)
-        elif menu_option == '2':
+        elif selected_option == FileTypeMatchMode.REGEX_INCLUDE:
             # Regex (include) File Type
             value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a regular expression to match {PARAMETER_COLOR}file type{Style.RESET_ALL}: ").strip(),
                 input_condition=lambda x: self._is_valid_regex(x),
                 invalid_message="The specified input is not a valid regular expression"
             )
-        elif menu_option == '3':
+        elif selected_option == FileTypeMatchMode.REGEX_EXCLUDE:
             # Regex (exclude) File Type
             value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a regular expression to exclude {PARAMETER_COLOR}file type{Style.RESET_ALL}: ").strip(),
                 input_condition=lambda x: self._is_valid_regex(x),
                 invalid_message="The specified input is not a valid regular expression"
             )
-        elif menu_option == '4':
+        elif menu_option is None:
             return
         else:
             raise ValueError("Unhandled or unknown file type filter type")
         
-        self.add_match_files_rule({'type': 'file_type', 'mode': option_map.get(menu_option), 'value': value})
+        self.add_match_files_rule({'type': FileMatchType.FILE_TYPE.value, 'mode': selected_option, 'value': value})
     def _interactive_file_name_filter(self):
         prompt_map = {}
         option_map = {}
@@ -576,14 +578,16 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             input_condition=lambda x: x in [str(v) for v in range(len(FileNameMatchMode))],
             invalid_message="Please enter a valid menu option"
         )
-        if menu_option == '0':
+        selected_option = option_map.get(menu_option, None)
+
+        if selected_option == FileNameMatchMode.SINGLE_EXACT:
             # Single Exact Name
             value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a {PARAMETER_COLOR}file name{Style.RESET_ALL} {Fore.BLACK}(note: do not include a file type extension - it will not be matched by this filter){Style.RESET_ALL}: ").strip(),
                 input_condition=lambda x: len(x) > 0,
                 invalid_message="Please enter a valid file name"
             )
-        elif menu_option == '1':
+        elif selected_option == FileNameMatchMode.MULTIPLE_EXACT:
             # Multiple Exact Name
             value = []
             while True:
@@ -601,65 +605,73 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
                     print(f"{VALUE_COLOR}{file_name}{Style.RESET_ALL} already included in {PARAMETER_COLOR}file names{Style.RESET_ALL}")
                 else:
                     value.append(file_name)
-        elif menu_option == '2':
+        elif selected_option == FileNameMatchMode.CONTAINS:
             # Contains
             value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a substring to match within a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension): ").strip(),
                 input_condition=lambda x: len(x) > 0,
                 invalid_message="Please enter a valid file name substring"
             )
-        elif menu_option == '3':
+        elif selected_option == FileNameMatchMode.STARTS_WITH:
             # Starts With
             value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a substring to match the start of a {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip(),
                 input_condition=lambda x: len(x) > 0,
                 invalid_message="Please enter a valid file name substring"
             )
-        elif menu_option == '4':
+        elif selected_option == FileNameMatchMode.ENDS_WITH:
             # Ends With
             value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a substring to match the end of a {PARAMETER_COLOR}file name{Style.RESET_ALL} (without the file type extension): ").strip(),
                 input_condition=lambda x: len(x) > 0,
                 invalid_message="Please enter a valid file name substring"
             )
-        elif menu_option == '5':
+        elif selected_option == FileNameMatchMode.REGEX_INCLUDE:
             # Regex (include)
             value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a regex pattern to match files by {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip(),
                 input_condition=lambda x: self._is_valid_regex(x),
                 invalid_message="The specified input is not a valid regular expression"
             )
-        elif menu_option == '6':
+        elif selected_option == FileNameMatchMode.REGEX_EXCLUDE:
             # Regex (exclude)
             value = self._repeat_prompt_until_valid(
                 lambda: input(f"Enter a regex pattern to exclude files by {PARAMETER_COLOR}file name{Style.RESET_ALL}: ").strip(),
                 input_condition=lambda x: self._is_valid_regex(x),
                 invalid_message="The specified input is not a valid regular expression"
             )
-        elif menu_option == '7':
+        elif menu_option is None:
             return
         else:
             raise ValueError("Unhandled or unknown file name filter type")
-        self.add_match_files_rule({'type': 'file_name', 'mode': option_map.get(menu_option), 'value': value})
+        self.add_match_files_rule({'type': FileMatchType.FILE_NAME.value, 'mode': selected_option, 'value': value})
 
     def _interactive_filters(self):
+        prompt_map = {}
+        option_map = {}
+        for i in range(len(FileMatchType)):
+            prompt_map[f"{i}"] = list(FileMatchType)[i].description
+            option_map[f"{i}"] = list(FileMatchType)[i].value
+        prompt_map[f"{len(prompt_map)}"] = "Done / Apply All Filters"
+        option_map[f"{len(option_map)}"] = None
+
         has_file_type_filter = False
         has_name_filter = False
         while True:
             menu_option = self._repeat_prompt_until_valid(
-                lambda: input(self._get_menu_text(f"Select a {PARAMETER_COLOR}file filter mode{Style.RESET_ALL} to configure (you will have the chance to define multiple):", {'0': 'File Type', '1': 'File Name', '2': 'Done / Apply All Filters'})).strip(),
-                input_condition=lambda x: x in ['0', '1', '2'],
+                lambda: input(self._get_menu_text(f"Select a {PARAMETER_COLOR}file filter mode{Style.RESET_ALL} to configure (you will have the chance to define multiple):", prompt_map)).strip(),
+                input_condition=lambda x: x in [str(v) for v in range(len(option_map))],
                 invalid_message="Please enter a valid menu option"
             )
-            if menu_option == '0':
+            selected_option = option_map.get(menu_option, None)
+            if selected_option == FileMatchType.FILE_TYPE:
                 self._interactive_file_type_filter()
                 has_file_type_filter = True
-            elif menu_option == '1':
+            elif selected_option == FileMatchType.FILE_NAME:
                 self._interactive_file_name_filter()
                 has_name_filter = True
-            elif menu_option == '2':
+            elif selected_option is None:
                 if not has_file_type_filter and not has_name_filter:
-                    
                     menu_option = self._repeat_prompt_until_valid(
                         lambda: input(self._get_menu_text(f"{ERROR_COLOR}Neither a file type nor file name filter has been defined. This will match ALL files in the source directory. Is this correct?{Style.RESET_ALL}", {'0': 'No', '1': 'Yes'})).strip(),
                         input_condition=lambda x: x in ['0', '1'],
