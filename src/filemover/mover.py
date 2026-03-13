@@ -14,11 +14,6 @@ class Mover:
     def __repr__(self):
         return f"Mover(name={self.config.mover_name}, description={self.config.mover_description})"
 
-    def _should_move_file(self, file_path):
-        if not file_path:
-            return False
-        return self.config.match_files_config.matches_filename(file_path)
-
     def _copy_file(self, source_file_path, destination_file_path):
         destination_directory = os.path.dirname(destination_file_path)
         if not os.path.exists(destination_directory):
@@ -87,7 +82,7 @@ class Mover:
                 walker = [(source_dir, [], os.listdir(source_dir))]
             for root, _, files in walker:
                 for file_name in files:
-                    if self._should_move_file(file_name):
+                    if self.matches_filename(file_name):
                         matched_files.append(os.path.join(root, file_name))
         return matched_files
 
@@ -100,7 +95,9 @@ class Mover:
         """
         Check if the given file matches the mover's criteria
         """
-        return self._should_move_file(file_name)
+        if not file_name:
+            return False
+        return self.config.match_files_config.matches_filename(file_name)
 
     def get_mover_config(self) -> MoverConfig:
         """
@@ -139,7 +136,7 @@ class Mover:
 
             for root, _, files in walker:
                 for file_name in files:
-                    if not self._should_move_file(file_name):
+                    if not self.matches_filename(file_name):
                         continue
 
                     source_path = os.path.join(root, file_name)
