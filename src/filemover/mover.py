@@ -70,7 +70,7 @@ class Mover:
 
     def get_matched_files(self) -> list[str]:
         """
-        Returns a list of paths of all files that match the mover's criteria
+        Return a list of paths of all files that match the mover's criteria
         """
         matched_files = []
         if not self.config.source_directories:
@@ -87,13 +87,19 @@ class Mover:
         return matched_files
 
     def list_matched_files(self) -> None:
+        """
+        Log the path for each file that matches the mover's criteria
+        """
         logger.info(f"Matched files for \"{self.config}\":")
         for matched_file in self.get_matched_files():
             logger.info(f"\t\"{matched_file}\"")
-
+    
     def matches_filename(self, file_name) -> bool:
         """
-        Check if the given file matches the mover's criteria
+        Return True if the provided filename matches the mover's criteria\n
+        ---\n
+        Keyword arguments:\n
+        file_name -- the name of the file to check
         """
         if not file_name:
             return False
@@ -107,12 +113,22 @@ class Mover:
 
     def set_mover_config(self, config: MoverConfig):
         """
-        Set the mover's configuration
+        Set the mover's configuration\n
+        ---\n
+        Keyword arguments:\n
+        config -- the MoverConfig to use for the mover 
         """
         config._validate()
         self.config = config
 
     def get_destination_file_path(self, source_path, destination_directory):
+        """
+        Get the destination path for a source file, with any configuration rules applied (e.g., renaming)\n
+        ---\n
+        Keyword arguments:\n
+        source_path -- a full path to a file to consider as the source\n
+        destination_directory -- the directory that the returned destination file path should have
+        """
         if self.config.rename_config:
             logger.info(f"\tApplying rename configuration: {self.config.rename_config}")
             destination_file_name = self.config.rename_config.apply_rename(os.path.basename(source_path)) if self.config.rename_config else os.path.basename(source_path)
@@ -123,7 +139,7 @@ class Mover:
 
     def move_files(self):
         """
-        Runs the mover based on its configuration to move (or copy) all files in the source directories to the configured destination directories
+        Run the mover based on its configuration to move (or copy) all files in the source directories to the configured destination directories
         """
         logger.info(f"Starting mover \"{self.config}\"")
         if not self.config.source_directories or not self.config.destination_directories:

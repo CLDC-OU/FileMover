@@ -407,6 +407,12 @@ class MoverConfigBuilder:
         return self
 
     def save_config(self, path):
+        """
+        Save the final config in JSON format to a specified file path. Fail if a file already exists at the path specified.\n
+        ---\n
+        Keyword arguments:\n
+        path -- the file path to attempt to save the config file to 
+        """
         self._validate_path(path)
         if os.path.exists(path):
             raise ValueError(f"{ERROR_COLOR}A file already exists at {path}. Overwriting files is disabled to avoid accidental data loss{Style.RESET_ALL}")
@@ -871,6 +877,12 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
                 print(f"{ERROR_COLOR}Failed to save configuration: {e}{Style.RESET_ALL}")
 
     def interactive_build(self):
+        """
+        Start an interactive step-by-step configuration builder in the console window\n
+        You will be walked through each configurable option for a single mover.\n
+        At the end you will have the option to save the configuration as a file or print it to the console.
+        """
+
         print(f"{Fore.LIGHTMAGENTA_EX}============================================================" \
               f"\n\n" \
               f"{Fore.LIGHTWHITE_EX}           Interactive File Mover Config Builder" \

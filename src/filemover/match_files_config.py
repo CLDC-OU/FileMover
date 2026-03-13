@@ -210,6 +210,9 @@ class FileMatchConfig:
         self.rules = [FileMatchRule(**rule) for rule in kwargs.get('rules', [])]
     
     def matches_filename(self, filename: str) -> bool:
+        """
+        Return True if the specified filename is matched by the file match rules included in the config. If no rules are specified or the "enabled" flag is set to False, all files will be matched
+        """
         if not self.enabled:
             return True
         
