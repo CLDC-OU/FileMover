@@ -3,7 +3,6 @@ from .mover_config import MoverConfig, DestinationCollisionBehavior, KeepSourceB
 from .logger import logger
 import shutil
 import os
-import re
 
 class Mover:
     def __init__(self, **kwargs):
@@ -14,37 +13,6 @@ class Mover:
 
     def __repr__(self):
         return f"Mover(name={self.config.mover_name}, description={self.config.mover_description})"
-
-    def _should_move_file(self, file_name):
-        if not file_name:
-            return False
-        
-        file_type = os.path.splitext(file_name)[1][1:]  # Get file extension without dot
-        file_name = os.path.splitext(file_name)[0]
-
-        # Verify file type
-        if self.config.file_types and not any(file_type == ext for ext in self.config.file_types):
-            return False
-        if self.config.file_type_regex and not re.match(self.config.file_type_regex, file_type):
-            return False
-        if self.config.file_type_exclude_regex and re.match(self.config.file_type_exclude_regex, file_type):
-            return False
-
-        # Verify file name
-        if self.config.file_names and file_name not in self.config.file_names:
-            return False
-        if self.config.file_name_regex and not re.match(self.config.file_name_regex, file_name):
-            return False
-        if self.config.file_name_exclude_regex and re.match(self.config.file_name_exclude_regex, file_name):
-            return False
-        if self.config.file_name_contains and self.config.file_name_contains not in file_name:
-            return False
-        if self.config.file_name_starts_with and not file_name.startswith(self.config.file_name_starts_with):
-            return False
-        if self.config.file_name_ends_with and not file_name.endswith(self.config.file_name_ends_with):
-            return False
-        
-        return True
 
     def _copy_file(self, source_file_path, destination_file_path):
         destination_directory = os.path.dirname(destination_file_path)
@@ -102,7 +70,7 @@ class Mover:
 
     def get_matched_files(self) -> list[str]:
         """
-        Returns a list of paths of all files that match the mover's criteria
+        Return a list of paths of all files that match the mover's criteria
         """
         matched_files = []
         if not self.config.source_directories:
@@ -114,20 +82,28 @@ class Mover:
                 walker = [(source_dir, [], os.listdir(source_dir))]
             for root, _, files in walker:
                 for file_name in files:
-                    if self._should_move_file(file_name):
+                    if self.matches_filename(file_name):
                         matched_files.append(os.path.join(root, file_name))
         return matched_files
 
     def list_matched_files(self) -> None:
+        """
+        Log the path for each file that matches the mover's criteria
+        """
         logger.info(f"Matched files for \"{self.config}\":")
         for matched_file in self.get_matched_files():
             logger.info(f"\t\"{matched_file}\"")
-
+    
     def matches_filename(self, file_name) -> bool:
         """
-        Check if the given file matches the mover's criteria
+        Return True if the provided filename matches the mover's criteria\n
+        ---\n
+        Keyword arguments:\n
+        file_name -- the name of the file to check
         """
-        return self._should_move_file(file_name)
+        if not file_name:
+            return False
+        return self.config.match_files_config.matches_filename(file_name)
 
     def get_mover_config(self) -> MoverConfig:
         """
@@ -137,12 +113,22 @@ class Mover:
 
     def set_mover_config(self, config: MoverConfig):
         """
-        Set the mover's configuration
+        Set the mover's configuration\n
+        ---\n
+        Keyword arguments:\n
+        config -- the MoverConfig to use for the mover 
         """
         config._validate()
         self.config = config
 
     def get_destination_file_path(self, source_path, destination_directory):
+        """
+        Get the destination path for a source file, with any configuration rules applied (e.g., renaming)\n
+        ---\n
+        Keyword arguments:\n
+        source_path -- a full path to a file to consider as the source\n
+        destination_directory -- the directory that the returned destination file path should have
+        """
         if self.config.rename_config:
             logger.info(f"\tApplying rename configuration: {self.config.rename_config}")
             destination_file_name = self.config.rename_config.apply_rename(os.path.basename(source_path)) if self.config.rename_config else os.path.basename(source_path)
@@ -153,7 +139,7 @@ class Mover:
 
     def move_files(self):
         """
-        Runs the mover based on its configuration to move (or copy) all files in the source directories to the configured destination directories
+        Run the mover based on its configuration to move (or copy) all files in the source directories to the configured destination directories
         """
         logger.info(f"Starting mover \"{self.config}\"")
         if not self.config.source_directories or not self.config.destination_directories:
@@ -166,7 +152,7 @@ class Mover:
 
             for root, _, files in walker:
                 for file_name in files:
-                    if not self._should_move_file(file_name):
+                    if not self.matches_filename(file_name):
                         continue
 
                     source_path = os.path.join(root, file_name)

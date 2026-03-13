@@ -102,6 +102,11 @@ class RenameConfig:
         return self._add_timestamp
 
     def apply_rename(self, file_name: str) -> str:
+        """
+        Return the modified file name based on the configuration\n
+        ---\n
+        file_name -- the name of the file to be renamed
+        """
         if not self.enabled:
             return file_name
         if not file_name:
