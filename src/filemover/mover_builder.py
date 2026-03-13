@@ -6,6 +6,7 @@ from colorama import Fore, Style
 import os
 import pytz
 import json
+from enum import Enum
 
 SET_INFO_COLOR = Fore.LIGHTBLACK_EX
 SET_PARAMETER_COLOR = Fore.LIGHTCYAN_EX
@@ -16,6 +17,27 @@ MENU_OPTION_VALUE_COLOR = Fore.MAGENTA
 MENU_OPTION_NAME_COLOR = Fore.BLUE
 WARNING_COLOR = Fore.LIGHTRED_EX
 ERROR_COLOR = Fore.RED
+
+class SaveConfigErrorReason(Enum):
+    NONE = "none"
+    INVALID_PATH = "invalid_path"
+    FILE_EXISTS = "file_exists"
+
+class CanSaveConfigState():
+    def __init__(self, can_save: bool, reason: SaveConfigErrorReason = SaveConfigErrorReason.NONE, description: str = "") -> None:
+        self._can_save = can_save
+        self._reason = reason
+        self._description = description
+    
+    @property
+    def can_save(self) -> bool:
+        return self._can_save
+    @property
+    def reason(self) -> SaveConfigErrorReason:
+        return self._reason
+    @property
+    def description(self) -> str:
+        return self._description
 
 class MoverConfigBuilder:
     def __init__(self):
@@ -406,7 +428,16 @@ class MoverConfigBuilder:
         self._print_set_message("Description", value)
         return self
 
-    def save_config(self, path):
+    def can_save_config(self, path) -> CanSaveConfigState:
+        try:
+            self._validate_path(path)
+        except ValueError as e:
+            return CanSaveConfigState(False, SaveConfigErrorReason.INVALID_PATH, str(e))
+        if os.path.exists(path):
+            return CanSaveConfigState(False, SaveConfigErrorReason.FILE_EXISTS)
+        return CanSaveConfigState(True)
+
+    def save_config(self, path, overwrite=False):
         """
         Save the final config in JSON format to a specified file path. Fail if a file already exists at the path specified.\n
         ---\n
@@ -414,8 +445,9 @@ class MoverConfigBuilder:
         path -- the file path to attempt to save the config file to 
         """
         self._validate_path(path)
-        if os.path.exists(path):
-            raise ValueError(f"{ERROR_COLOR}A file already exists at {path}. Overwriting files is disabled to avoid accidental data loss{Style.RESET_ALL}")
+        if not overwrite:
+            if os.path.exists(path):
+                raise ValueError(f"{ERROR_COLOR}A file already exists at {path}. Overwriting files is disabled to avoid accidental data loss{Style.RESET_ALL}")
         with open(path, 'w') as f:
             json.dump(self.config, f, indent=4, default=str)
         print(f"{Fore.GREEN}Configuration saved to {path}{Style.RESET_ALL}")
@@ -852,6 +884,10 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         
         self._interactive_timestamp_config()
 
+    def _print_config(self):
+            print(f"{Fore.GREEN}Configuration complete! Here is the resulting configuration:{Style.RESET_ALL}")
+            print(json.dumps(self.config, indent=4, default=str))
+
     def _interactive_save_config(self):
         menu_option = self._repeat_prompt_until_valid(
             lambda: input(self._get_menu_text(f"How would you like to save this configuration?", {'0': 'Print as Text', '1': 'Save to File', '2': 'Do Nothing'})).strip(),
@@ -860,9 +896,8 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
         )
         if menu_option == '2':
             return
-        if menu_option == '0':
-            print(f"{Fore.GREEN}Configuration complete! Here is the resulting configuration:{Style.RESET_ALL}")
-            print(json.dumps(self.config, indent=4, default=str))
+        elif menu_option == '0':
+            self._print_config()
             return
         while True:
             file_path = self._repeat_prompt_until_valid(
@@ -870,11 +905,30 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
                 input_condition=lambda x: self._is_valid_path(x) and x.lower().endswith('.json'),
                 invalid_message="Please enter a valid absolute path ending with .json"
             )
-            try:
-                self.save_config(file_path)
-                break
-            except Exception as e:
-                print(f"{ERROR_COLOR}Failed to save configuration: {e}{Style.RESET_ALL}")
+            state = self.can_save_config(file_path)
+
+            if state.can_save:
+                try:
+                    self.save_config(file_path)
+                    break
+                except Exception as e:
+                    print(f"{ERROR_COLOR}Failed to save configuration: {e}{Style.RESET_ALL}")
+            else:
+                if state.reason == SaveConfigErrorReason.FILE_EXISTS:
+                    selected_option = self._repeat_prompt_until_valid(
+                        lambda: input(self._get_menu_text(f"A file already exists at \"{file_path}\", how would you like to proceed?{Style.RESET_ALL}:", {'0': 'Enter a different path', '1': 'Override the existing file', '2': 'Print the config instead'})).strip(),
+                        input_condition=lambda x: x in ['0', '1', '2'],
+                        invalid_message="Please enter a valid menu option"
+                    )
+                    if selected_option == '1':
+                        self.save_config(file_path, True)
+                        break
+                    elif selected_option == '2':
+                        self._print_config()
+                        break
+                else:
+                    print(f"{ERROR_COLOR}Failed to save configuration: {state.description}{Style.RESET_ALL}")
+            
 
     def interactive_build(self):
         """
