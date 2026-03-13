@@ -1,6 +1,22 @@
 # Changelog
 
-## 1.3.0 (2026-02-)
+## 1.4.0 (2026-03-13)
+
+```diff
+    | Fixed keep source behavior being inverted for all but "always" and "never" modes
+    | Fixed interactive config builder always setting config values as lowercase even when it doesn't make sense
+    | Fixed interactive config builder saving name and description fields as "name" and "description" instead of "mover_name" and "mover_description"
++   | Added interactive config builder flow for an existing file at the specified path when saving config to file with an option to overwrite
+
+    | [BREAKING] Completely reworked the file matching configuration system
+-   | Removed config options: "file_type", "file_types", "file_type_regex", "file_type_exclude_regex", "file_name", "file_names", "file_name_regex", "file_name_exclude_regex", "file_name_contains", "file_name_starts_with", "file_name_ends_with"
++   | Added config option "match_files"
++   | Added separate File Matching module to process file matching rules
+-   | Removed file matching rule validation in interactive config builder
++   | Added case sensitivity option to file matching
+```
+
+## 1.3.0 (2026-02-24)
 
 ```diff
 -   | Removed "keep_source" configuration option
