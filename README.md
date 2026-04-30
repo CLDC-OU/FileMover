@@ -33,6 +33,42 @@ it mova da files :3
 
 ## Setup / Use
 
+### From the Command Line
+
+1. Install the package. Replace `<VERSION>` with the desired version number (e.g., `1.0.0`):
+    ```bash
+    pip install filemover @ git+https://github.com/CLDC-OU/FileMover.git@<VERSION>
+    ```
+2. Run the desired [command](#commands) from the command line
+
+#### Commands
+
+
+| Command | Options | Description |
+|-----|-----|-----|
+| `build-mover` | None | Starts an interactive script that walks you through configuring a new File Mover. This script is not necessary for running a File Mover, but makes setup extremely easy |
+| `run-mover` | `j` (`--json_file`), `y` (`--yaml_file`) | Specify the path to a JSON or YAML file with the configuration for a File Mover and run it |
+
+#### Examples
+
+```bash
+build-mover
+```
+
+```bash
+run-mover --json-file=C:/User/Documents/example_mover.json
+```
+
+```bash
+run-mover -y "C:/User/Documents/Folder with a space/example_mover.yaml"
+```
+
+```bash
+run-mover -j ./mover.json
+```
+
+### Within a Python project
+
 1. Import the package into your Python project. Replace `<VERSION>` with the desired version number (e.g., `1.0.0`):
     ```bash
     pip install filemover @ git+https://github.com/CLDC-OU/FileMover.git@<VERSION>

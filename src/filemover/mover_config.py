@@ -1,6 +1,6 @@
 from __future__ import annotations
-from .rename_config import RenameConfig
-from .match_files_config import FileMatchConfig
+from filemover.rename_config import RenameConfig
+from filemover.match_files_config import FileMatchConfig
 from enum import Enum
 
 class KeepSourceBehavior(Enum):

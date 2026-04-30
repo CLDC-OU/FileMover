@@ -1,6 +1,6 @@
-from src.filemover.rename_config import TimestampPosition
-from src.filemover.mover_config import KeepSourceBehavior, CollisionAvoidanceBehavior, DestinationCollisionBehavior
-from src.filemover.match_files_config import FileNameMatchMode, FileTypeMatchMode, FileMatchRuleOperator, FileMatchType
+from filemover.rename_config import TimestampPosition
+from filemover.mover_config import KeepSourceBehavior, CollisionAvoidanceBehavior, DestinationCollisionBehavior
+from filemover.match_files_config import FileNameMatchMode, FileTypeMatchMode, FileMatchRuleOperator, FileMatchType
 
 from colorama import Fore, Style
 import os
