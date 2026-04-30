@@ -110,7 +110,7 @@ After installing the `filemover` package, you can use the `build-mover` command 
 > 
 > If you wanna do fancy stuff like only move certain files or... god forbid... COPY files D: well, heh, we've got that too for the low, low price of configuration
 
-| Option | Type | Description |
+| Property | Type | Description |
 |-----|-----|-----|
 | `mover_name` | `string` | A name for the mover. This will print in logs |
 | `mover_description`? | `string` | A more detailed description for the mover. This can be used for whatever notes to identify the mover later. It does not change any behavior within the application. It may be included in reports in the future |
@@ -192,7 +192,7 @@ This operator applies to all rules. There is currently no way to define nested o
 
 Applies to property `type` of [File Match Rule](#file-match-rule)
 
-| Type | Description |
+| Option | Description |
 |-----|-----|
 | `"file_type"` | Match file types/extensions |
 | `"file_name"` | Match file names |
@@ -201,7 +201,7 @@ Applies to property `type` of [File Match Rule](#file-match-rule)
 
 Applies to property `mode` of [File Match Rule](#file-match-rule) for the `"file_type"` [File Match Type](#file-match-types)
 
-| Type | Description |
+| Option | Description |
 |-----|-----|
 | `"single_exact"` | Match file types with a single extension |
 | `"multiple_exact"` | Match file types among a list of extensions |
@@ -212,7 +212,7 @@ Applies to property `mode` of [File Match Rule](#file-match-rule) for the `"file
 
 Applies to property `mode` of [File Match Rule](#file-match-rule) for the `"file_name"` [File Match Type](#file-match-types)
 
-| Type | Description |
+| Option | Description |
 |-----|-----|
 | `"single_exact"` | Match files with a single exact name |
 | `"multiple_exact"` | Match files among a list of exact names |
@@ -246,7 +246,7 @@ Applies to property `mode` of [File Match Rule](#file-match-rule) for the `"file
 
 #### Timestamp Position
 
-| Type | Description |
+| Option | Description |
 |-----|-----|
 | `"start"` | Add the timestamp to the very beginning of the file name (timestamp + prefix + name + suffix) |
 | `"after_prefix"` | Add the timestamp at the beginning of the file name after the prefix (prefix + timestamp + name + suffix) |
