@@ -26,7 +26,6 @@ it mova da files :3
 - [ ] Support environment variables like %HOMEPATH%
 - [ ] Support relative file paths
 - [ ] Custom scheduling to run at specific dates/times or frequencies
-- [ ] File size filtering
 - [ ] Delete files instead of moving them (why would you do that???)
 
 
