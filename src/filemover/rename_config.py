@@ -26,7 +26,7 @@ class AddTimestampConfig:
     def __init__(self, **kwargs):
         self._enabled = kwargs.get('enabled', False)
         self._format = kwargs.get('format', '%Y-%m-%d_%H-%M-%S')
-        self._timezone = kwargs.get('timezone', 'UTC')
+        self._timezone = kwargs.get('timezone')
         self._position = TimestampPosition.from_string(kwargs.get('position', 'after_prefix'))
 
         if not isinstance(self._enabled, bool):
