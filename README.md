@@ -23,8 +23,8 @@ it mova da files :3
     - [x] Search and replace text in moved file names
 - [x] Move files to a single or multiple directories
 - [x] Copy files instead of moving (you're telling me the file mover can do more than moving???)
-- [ ] Support environment variables like %HOMEPATH%
-- [ ] Support relative file paths
+- [x] Support environment variables like %HOMEPATH%
+- [x] Support relative file paths
 - [ ] Custom scheduling to run at specific dates/times or frequencies
 - [ ] Delete files instead of moving them (why would you do that???)
 
