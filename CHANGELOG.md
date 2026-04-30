@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.1 (2026-04-30)
+
+```diff
++   | Added command line scripts build-mover and run-mover
++   | Added full configuration documentation
++   | Added setup/use documentation
+    | Fixed timezone being defaulted to UTC instead of local timezone
++   | Added environment path resolution
+```
+
 ## 1.4.0 (2026-03-13)
 
 ```diff
