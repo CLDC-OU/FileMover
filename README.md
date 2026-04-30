@@ -28,8 +28,9 @@ it mova da files :3
 - [x] Copy files instead of moving (you're telling me the file mover can do more than moving???)
 - [x] Support environment variables like %HOMEPATH%
 - [x] Support relative file paths
+- [x] Configurable file collision behavior so files aren't overwritten when you don't want them to be
 - [ ] Custom scheduling to run at specific dates/times or frequencies
-- [ ] Delete files instead of moving them (why would you do that???)
+- [x] Delete files instead of moving them (why would you do that with the FileMover???)
 
 
 
