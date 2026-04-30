@@ -105,15 +105,22 @@ After installing the `filemover` package, you can use the `build-mover` command 
 
 ### General Configuration
 
-| Option | Description | Notes |
+> [!NOTE] 
+> You must specify one of `destination_directory` or `destination_directories` and one of `source_directory` or `source_directories`. If all you wanna do is mova tha files (a true file mover), that's all you need to configure
+> 
+> If you wanna do fancy stuff like only move certain files or... god forbid... COPY files D: well, heh, we've got that too for the low, low price of configuration
+
+| Option | Type | Description |
 |-----|-----|-----|
-| `mover_name` | A name for the mover | This will print in logs |
-| `mover_description`? | A more detailed description for the mover | This can be used for whatever notes to identify the mover later. It does not change any behavior within the application. It may be included in reports in the future |
-| `source_directory` | The source directory to move files from | Relative path structures, network locations, and path variables (e.g., `%HOMEPATH%`) are all supported |
-| `destination_directory` | The destination directory to move files to | Relative path structures, network locations, and path variables (e.g., `%HOMEPATH%`) are all supported |
+| `mover_name` | `string` | A name for the mover. This will print in logs |
+| `mover_description`? | `string` | A more detailed description for the mover. This can be used for whatever notes to identify the mover later. It does not change any behavior within the application. It may be included in reports in the future |
+| `source_directory`* | `string` | A single source directory to move files from. Relative path structures, network locations, and path variables (e.g., `%HOMEPATH%`) are all supported. |
+| `source_directories`* | `list` or `string` | A list of directories to move files from. If `source_directory` is set, this property will be ignored. |
+| `destination_directory`* | `string` | A single destination directory to move files to. Relative path structures, network locations, and path variables (e.g., `%HOMEPATH%`) are all supported |
+| `destination_directories`* | `list` of `string` | A list of directories to move files to. Moved files will be attempted to be placed in each of these (all conditions are applied together as one). If `destination_directory` is set, this property will be ignored. |
 | `keep_source_behavior`? | What should be done with the source files (not restricted to moving!) | Default `"never_keep_source"`. See [Keep Source Behavior](#keep-source-behavior) |
 | `recursive`? | Whether to recursively search subdirectory | Default: `false`. If `true` will traverse subdirectories within the source directory and match files. Destination files will always be placed directly in the `source_directory` |
-| `destination_collision_behavior` | How collisions in the destination should be handled | Default: `"ignore"`. See [Destination Collision Behavior](#destination-collision-behavior) |
+| `destination_collision_behavior`? | How collisions in the destination should be handled | Default: `"ignore"`. See [Destination Collision Behavior](#destination-collision-behavior) |
 | `collision_avoidance_behavior`? | How collisions should be avoided by the mover | Default: `"none"` See [Collision Avoidance Behavior](#collision-avoidance-behavior) |
 | `match_files`? | The configuration used to match files | See [File Matching](#file-matching). If omitted, all files in the source are processed |
 | `rename`? | The configuration used to rename files that are moved | See [File Renaming](#file-renaming) |
