@@ -15,7 +15,7 @@ class FileMatchType(Enum):
     @property
     def description(self) -> str:
         if self == FileMatchType.FILE_TYPE:
-            return "Match file types"
+            return "Match file types/extensions"
         elif self == FileMatchType.FILE_NAME:
             return "Match file names"
         else:
