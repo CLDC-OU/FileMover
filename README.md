@@ -4,6 +4,9 @@ it mova da files :3
 
 ## Features
 
+> [!NOTE]
+> For a full history of changes, take a look at the [CHANGELOG.md](./CHANGELOG.md)
+
 - [x] Move files from one location to another
 - [x] Define custom "Movers" that specify file movement rules & patterns
 - [x] Filter files by Name
@@ -33,6 +36,9 @@ it mova da files :3
 ## Setup / Use
 
 ### From the Command Line
+
+> [!WARNING]
+> Make sure you have python installed and set up first. This repository will not cover python installation/setup
 
 1. Install the package. Replace `<VERSION>` with the desired version number (e.g., `1.0.0`):
     ```bash
@@ -105,7 +111,7 @@ After installing the `filemover` package, you can use the `build-mover` command 
 
 ### General Configuration
 
-> [!NOTE] 
+> [!IMPORTANT] 
 > You must specify one of `destination_directory` or `destination_directories` and one of `source_directory` or `source_directories`. If all you wanna do is mova tha files (a true file mover), that's all you need to configure
 > 
 > If you wanna do fancy stuff like only move certain files or... god forbid... COPY files D: well, heh, we've got that too for the low, low price of configuration
