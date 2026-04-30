@@ -263,3 +263,7 @@ This section is for developers who want to contribute to the project or run it l
     ```bash
     pip install -r requirements.txt
     ```
+4. Install the package
+    ```bash
+    pip install .
+    ```
