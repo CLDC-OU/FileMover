@@ -1,6 +1,6 @@
 from __future__ import annotations
-from .mover_config import MoverConfig, DestinationCollisionBehavior, KeepSourceBehavior, CollisionAvoidanceBehavior
-from .logger import logger
+from filemover.mover_config import MoverConfig, DestinationCollisionBehavior, KeepSourceBehavior, CollisionAvoidanceBehavior
+from filemover.logger import logger
 import shutil
 import os
 
