@@ -2,6 +2,7 @@ from __future__ import annotations
 from filemover.rename_config import RenameConfig
 from filemover.match_files_config import FileMatchConfig
 from enum import Enum
+import os
 
 class KeepSourceBehavior(Enum):
     NEVER_KEEP_SOURCE = 'never_keep_source'
@@ -78,16 +79,16 @@ class MoverConfig:
         self._mover_description = kwargs.get('mover_description', 'No description provided')
 
         if 'source_directory' in kwargs:
-            self._source_directories = [kwargs['source_directory']]
+            self._source_directories = [os.path.expandvars(kwargs['source_directory'])]
         else:
-            self._source_directories = kwargs.get('source_directories', [])
+            self._source_directories = [os.path.expandvars(p) for p in kwargs.get('source_directories', [])]
 
         self._match_files_config =  FileMatchConfig(**kwargs.get('match_files', {}))
 
         if 'destination_directory' in kwargs:
-            self._destination_directories = [kwargs['destination_directory']]
+            self._destination_directories = [os.path.expandvars(kwargs['destination_directory'])]
         else:
-            self._destination_directories = kwargs.get('destination_directories', [])
+            self._destination_directories = [os.path.expandvars(p) for p in kwargs.get('destination_directories', [])]
 
         self._rename_config = RenameConfig(**kwargs.get('rename', {}))
         if not self._rename_config.enabled:
