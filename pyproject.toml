@@ -24,6 +24,10 @@ dependencies = [
     "colorama"
 ]
 
+[project.scripts]
+build-mover = "filemover.scripts:build_mover"
+run-mover = "filemover.scripts:run_mover"
+
 [project.urls]
 Homepage = "https://github.com/CLDC-OU/FileMover"
 Repository = "https://github.com/CLDC-OU/FileMover.git"
