@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.2 (2026-05-01)
+
+```diff
++   | Added (optional) unique identifier field for movers
++   | Added cross-execution metadata tracking (to json file)
++   | Added file logging
+```
+
 ## 1.4.1 (2026-04-30)
 
 ```diff
