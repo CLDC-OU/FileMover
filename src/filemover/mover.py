@@ -1,12 +1,20 @@
 from __future__ import annotations
 from filemover.mover_config import MoverConfig, DestinationCollisionBehavior, KeepSourceBehavior, CollisionAvoidanceBehavior
-from filemover.logger import logger
+from filemover.logger import create_logger
+from filemover.metadata import Metadata, ExecutionResults
 import shutil
 import os
 
 class Mover:
     def __init__(self, **kwargs):
+        log_file = kwargs.get('log_file', None)
+        verbose = kwargs.get('verbose', True)
+        self.mover_id = kwargs.get('id', None)
+        metadata_file = kwargs.get('metadata_file', 'filemover.json')
         self.config = MoverConfig(**kwargs)
+        self.logger = create_logger(self.config.mover_name, verbose, log_file)
+        if self.mover_id:
+            self.metadata = Metadata(metadata_file)
 
     def __str__(self):
         return f"{self.config.mover_name}: {self.config.mover_description}"
@@ -14,21 +22,22 @@ class Mover:
     def __repr__(self):
         return f"Mover(name={self.config.mover_name}, description={self.config.mover_description})"
 
-    def _copy_file(self, source_file_path, destination_file_path):
+    def _copy_file(self, source_file_path, destination_file_path) -> bool:
         destination_directory = os.path.dirname(destination_file_path)
         if not os.path.exists(destination_directory):
             os.makedirs(destination_directory)
         
-        logger.info(f"Copying file \"{source_file_path}\" to \"{destination_file_path}\"")
+        self.logger.debug(f"Copying file \"{source_file_path}\" to \"{destination_file_path}\"")
 
         if os.path.exists(destination_file_path):
             if self.config.keep_source_behavior == DestinationCollisionBehavior.IGNORE:
-                logger.info(f"\tFile \"{destination_file_path}\" already exists. Skipping copy")
-                return
+                self.logger.warning(f"File \"{destination_file_path}\" already exists. Skipping copy")
+                return False
         shutil.copy2(source_file_path, destination_file_path)
-        logger.info(f"\tSuccessfully copied file \"{source_file_path}\" to \"{destination_file_path}\"")
+        self.logger.debug(f"Successfully copied file \"{source_file_path}\" to \"{destination_file_path}\"")
+        return True
 
-    def _handle_source_file_removal(self, source_path, destinations, collisions):
+    def _handle_source_file_removal(self, source_path, destinations, collisions) -> bool:
         if self.config.keep_source_behavior == KeepSourceBehavior.ALWAYS_KEEP_SOURCE:
             should_remove = False
         elif self.config.keep_source_behavior == KeepSourceBehavior.KEEP_SOURCE_IF_ANY_COLLIDE:
@@ -44,7 +53,9 @@ class Mover:
 
         if should_remove:
             os.remove(source_path)
-            logger.info(f"Removed source file \"{source_path}\"")
+            self.logger.debug(f"Removed source file \"{source_path}\"")
+            return True
+        return False
 
     def _get_destination_files_for_source(self, source_path) -> tuple[list, list]:
         collisions = []
@@ -90,9 +101,9 @@ class Mover:
         """
         Log the path for each file that matches the mover's criteria
         """
-        logger.info(f"Matched files for \"{self.config}\":")
+        self.logger.info(f"Matched files for \"{self.config}\":")
         for matched_file in self.get_matched_files():
-            logger.info(f"\t\"{matched_file}\"")
+            self.logger.info(f"\t\"{matched_file}\"")
     
     def matches_filename(self, file_name) -> bool:
         """
@@ -130,42 +141,85 @@ class Mover:
         destination_directory -- the directory that the returned destination file path should have
         """
         if self.config.rename_config:
-            logger.info(f"\tApplying rename configuration: {self.config.rename_config}")
+            self.logger.debug(f"Applying rename configuration: {self.config.rename_config}")
             destination_file_name = self.config.rename_config.apply_rename(os.path.basename(source_path)) if self.config.rename_config else os.path.basename(source_path)
-            logger.info(f"\tRenaming file to \"{destination_file_name}\"")
+            self.logger.debug(f"Renaming file to \"{destination_file_name}\"")
         else:
             destination_file_name = os.path.basename(source_path)
         return os.path.join(destination_directory, destination_file_name)
+
+    def _run_move_files(self) -> ExecutionResults:
+        results = ExecutionResults()
+        try:
+            if not self.config.source_directories or not self.config.destination_directories:
+                raise ValueError("Source and destination directories must be specified.")
+            for source_dir in self.config.source_directories:
+                if self.config.recursive:
+                    walker = os.walk(source_dir)
+                else:
+                    walker = [(source_dir, [], os.listdir(source_dir))]
+
+                for root, _, files in walker:
+                    for file_name in files:
+                        is_copied = False
+                        is_deleted = False
+
+                        if not self.matches_filename(file_name):
+                            continue
+
+                        source_path = os.path.join(root, file_name)
+                        destinations, collisions = self._get_destination_files_for_source(source_path)
+                        self.logger.debug(f"File \"{file_name}\" matched on mover \"{self.config}\" with {len(destinations)} destination(s) and {len(collisions)} collision(s)")
+
+                        if self._should_skip_move(destinations, collisions):
+                            self.logger.debug(f"{len(collisions)} collision(s) would result from the current move operation - this file will be skipped: \"{source_path}\"")
+                            continue
+
+                        # File Copying
+                        copied_count = 0
+                        skipped_count = 0
+                        for destination_file_path in destinations:
+                            is_copied = self._copy_file(source_path, destination_file_path)
+                            if is_copied:
+                                copied_count += 1
+                            else:
+                                skipped_count += 1
+
+                        # Source File Removal
+                        is_deleted = self._handle_source_file_removal(source_path, destinations, collisions)
+                        
+                        if copied_count > 0 and is_deleted:
+                            results.increment_moved(copied_count)
+                        elif copied_count > 0:
+                            results.increment_copied(copied_count)
+                        elif is_deleted:
+                            results.increment_deleted()
+                        
+                        results.increment_skipped(skipped_count)
+
+        except BaseException as e:
+            results.increment_errors()
+        
+        return results
 
     def move_files(self):
         """
         Run the mover based on its configuration to move (or copy) all files in the source directories to the configured destination directories
         """
-        logger.info(f"Starting mover \"{self.config}\"")
-        if not self.config.source_directories or not self.config.destination_directories:
-            raise ValueError("Source and destination directories must be specified.")
-        for source_dir in self.config.source_directories:
-            if self.config.recursive:
-                walker = os.walk(source_dir)
-            else:
-                walker = [(source_dir, [], os.listdir(source_dir))]
-
-            for root, _, files in walker:
-                for file_name in files:
-                    if not self.matches_filename(file_name):
-                        continue
-
-                    source_path = os.path.join(root, file_name)
-                    destinations, collisions = self._get_destination_files_for_source(source_path)
-                    logger.info(f"File \"{file_name}\" matched on mover \"{self.config}\" with {len(destinations)} destination(s) and {len(collisions)} collision(s)")
-
-                    if self._should_skip_move(destinations, collisions):
-                        logger.info(f"{len(collisions)} collision(s) would result from the current move operation - this file will be skipped: \"{source_path}\"")
-                        continue
-
-                    # File Copying
-                    for destination_file_path in destinations:
-                        self._copy_file(source_path, destination_file_path)
-
-                    # Source File Removal
-                    self._handle_source_file_removal(source_path, destinations, collisions)
+        self.logger.debug(f"Starting mover \"{self.config}\"")
+        results = self._run_move_files()
+        messages = []
+        if results.moved > 0:
+            messages.append(f"Moved {results.moved} file{'' if results.moved == 1 else 's'}")
+        if results.copied > 0:
+            messages.append(f"Copied {results.copied} file{'' if results.copied == 1 else 's'}")
+        if results.deleted > 0:
+            messages.append(f"Deleted {results.deleted} file{'' if results.deleted == 1 else 's'}")
+        message = f"Mover \"{self.config.mover_name}\" completed"
+        if len(messages) > 0:
+            message = message + "\n\t" + '\n\t'.join(messages)
+        else:
+            message = message + " - no files to move"
+        self.logger.info(message)
+        if self.mover_id:
+            self.metadata.update(self.mover_id, results)

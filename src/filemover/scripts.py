@@ -4,11 +4,14 @@ from colorama import Fore, Style
 import argparse
 import json
 import yaml
+import os
 
 def run_mover():
     parser = argparse.ArgumentParser()
     parser.add_argument("-j", "--json_config", help="Specify a path to a JSON configuration file")
     parser.add_argument("-y", "--yaml_config", help="Specify a path to a YAML configuration file")
+    parser.add_argument("-o", "--output", help="An optional file to save (append) logs to", required=False, default=None)
+    parser.add_argument("-v", "--verbose", help="Outputs additional details to logs if True or only movement operations if False", required=False, default=True)
 
     args = parser.parse_args()
     config = None
@@ -39,7 +42,21 @@ def run_mover():
             print(f"{Fore.RED}{e}{Style.RESET_ALL}")
             return
 
+    verbose = args.verbose = True
+    log_file = None
+    if args.output:
+        log_file = args.output
+        if not os.path.exists(log_file):
+            try:
+                with open(log_file, 'w') as f:
+                    f.close()
+            except BaseException as e:
+                print(f"Failed to open provided output file: {Fore.RED}{e}{Style.RESET_ALL}")
+                return
+
     if not config is None and isinstance(config, dict):
+        config["verbose"] = verbose
+        config["log_file"] = log_file
         mover = Mover(**config)
         mover.move_files()
     else:
