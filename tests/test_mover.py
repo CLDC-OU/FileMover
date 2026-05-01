@@ -1,5 +1,5 @@
 import unittest
-from src.filemover import Mover
+from filemover import Mover
 import tempfile
 import os
 
@@ -24,10 +24,10 @@ class TestMoverShouldMoveFile(unittest.TestCase):
         self.mover = Mover(**mover_config)
 
     def test_none_file_name(self):
-        self.assertFalse(self.mover._should_move_file(None))
+        self.assertFalse(self.mover.matches_filename(None))
 
     def test_empty_file_name(self):
-        self.assertFalse(self.mover._should_move_file(""))
+        self.assertFalse(self.mover.matches_filename(""))
 
     def test_file_types(self):
         config = self.default_config.copy()
@@ -43,8 +43,8 @@ class TestMoverShouldMoveFile(unittest.TestCase):
             ]
         }
         mover = Mover(**config)
-        self.assertTrue(mover._should_move_file("file.txt"))
-        self.assertFalse(mover._should_move_file("file.pdf"))
+        self.assertTrue(mover.matches_filename("file.txt"))
+        self.assertFalse(mover.matches_filename("file.pdf"))
 
     def test_file_type_regex(self):
         config = self.default_config.copy()
@@ -60,10 +60,10 @@ class TestMoverShouldMoveFile(unittest.TestCase):
             ]
         }
         mover = Mover(**config)
-        self.assertTrue(mover._should_move_file("report.xls"))
-        self.assertTrue(mover._should_move_file("data.xlsx"))
-        self.assertFalse(mover._should_move_file("notes.txt"))
-        self.assertFalse(mover._should_move_file("summary.csv"))
+        self.assertTrue(mover.matches_filename("report.xls"))
+        self.assertTrue(mover.matches_filename("data.xlsx"))
+        self.assertFalse(mover.matches_filename("notes.txt"))
+        self.assertFalse(mover.matches_filename("summary.csv"))
 
     def test_file_type_exclude_regex(self):
         config = self.default_config.copy()
@@ -79,8 +79,8 @@ class TestMoverShouldMoveFile(unittest.TestCase):
             ]
         }
         mover = Mover(**config)
-        self.assertFalse(mover._should_move_file("data.bak"))
-        self.assertTrue(mover._should_move_file("data.txt"))
+        self.assertFalse(mover.matches_filename("data.bak"))
+        self.assertTrue(mover.matches_filename("data.txt"))
 
     def test_file_names(self):
         config = self.default_config.copy()
@@ -96,8 +96,8 @@ class TestMoverShouldMoveFile(unittest.TestCase):
             ]
         }
         mover = Mover(**config)
-        self.assertTrue(mover._should_move_file("keep.txt"))
-        self.assertFalse(mover._should_move_file("other.txt"))
+        self.assertTrue(mover.matches_filename("keep.txt"))
+        self.assertFalse(mover.matches_filename("other.txt"))
 
     def test_file_name_regex(self):
         config = self.default_config.copy()
@@ -113,8 +113,8 @@ class TestMoverShouldMoveFile(unittest.TestCase):
             ]
         }
         mover = Mover(**config)
-        self.assertTrue(mover._should_move_file("report_123.csv"))
-        self.assertFalse(mover._should_move_file("summary.csv"))
+        self.assertTrue(mover.matches_filename("report_123.csv"))
+        self.assertFalse(mover.matches_filename("summary.csv"))
 
     def test_file_name_exclude_regex(self):
         config = self.default_config.copy()
@@ -130,8 +130,8 @@ class TestMoverShouldMoveFile(unittest.TestCase):
             ]
         }
         mover = Mover(**config)
-        self.assertFalse(mover._should_move_file("temp_file.txt"))
-        self.assertTrue(mover._should_move_file("final.txt"))
+        self.assertFalse(mover.matches_filename("temp_file.txt"))
+        self.assertTrue(mover.matches_filename("final.txt"))
 
     def test_file_name_contains(self):
         config = self.default_config.copy()
@@ -147,8 +147,8 @@ class TestMoverShouldMoveFile(unittest.TestCase):
             ]
         }
         mover = Mover(**config)
-        self.assertTrue(mover._should_move_file("mydata.txt"))
-        self.assertFalse(mover._should_move_file("report.txt"))
+        self.assertTrue(mover.matches_filename("mydata.txt"))
+        self.assertFalse(mover.matches_filename("report.txt"))
 
     def test_file_name_starts_with(self):
         config = self.default_config.copy()
@@ -164,8 +164,8 @@ class TestMoverShouldMoveFile(unittest.TestCase):
             ]
         }
         mover = Mover(**config)
-        self.assertTrue(mover._should_move_file("startfile.txt"))
-        self.assertFalse(mover._should_move_file("endfile.txt"))
+        self.assertTrue(mover.matches_filename("startfile.txt"))
+        self.assertFalse(mover.matches_filename("endfile.txt"))
 
     def test_file_name_ends_with(self):
         config = self.default_config.copy()
@@ -182,9 +182,9 @@ class TestMoverShouldMoveFile(unittest.TestCase):
         }
 
         mover = Mover(**config)
-        self.assertTrue(mover._should_move_file("task.done.txt"))
-        self.assertFalse(mover._should_move_file("task.txt"))
-        self.assertFalse(mover._should_move_file("task.done.NOT.txt"))
+        self.assertTrue(mover.matches_filename("task.done.txt"))
+        self.assertFalse(mover.matches_filename("task.txt"))
+        self.assertFalse(mover.matches_filename("task.done.NOT.txt"))
 
     def test_all_conditions_met(self):
         config = self.default_config.copy()
@@ -215,9 +215,9 @@ class TestMoverShouldMoveFile(unittest.TestCase):
             ]
         }
         mover = Mover(**config)
-        self.assertTrue(mover._should_move_file("startdata.final.txt"))
-        self.assertFalse(mover._should_move_file("data.txt"))
-        self.assertFalse(mover._should_move_file("startdata.md"))
+        self.assertTrue(mover.matches_filename("startdata.final.txt"))
+        self.assertFalse(mover.matches_filename("data.txt"))
+        self.assertFalse(mover.matches_filename("startdata.md"))
 
 class TestMoverListMatchedFiles(unittest.TestCase):
     def setUp(self):

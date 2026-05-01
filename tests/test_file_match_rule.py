@@ -1,5 +1,5 @@
 import unittest
-from src.filemover.match_files_config import FileMatchRule, FileMatchType, FileNameMatchMode, FileMatchType
+from filemover.match_files_config import FileMatchRule, FileMatchType, FileNameMatchMode, FileMatchType
 import tempfile
 import os
 
