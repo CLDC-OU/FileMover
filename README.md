@@ -119,6 +119,7 @@ After installing the `filemover` package, you can use the `build-mover` command 
 
 | Property | Type | Description |
 |-----|-----|-----|
+| `id`? | `string` | A unique name for the mover. This is used to uniquely identify the logger for cross-execution metadata tracking. Metadata tracking will not be saved if you don't specify this. If multiple movers use the same name (and refer to the same metadata file) their stats will be combined. |
 | `mover_name` | `string` | A name for the mover. This will print in logs |
 | `mover_description`? | `string` | A more detailed description for the mover. This can be used for whatever notes to identify the mover later. It does not change any behavior within the application. It may be included in reports in the future |
 | `source_directory`* | `string` | A single source directory to move files from. Relative path structures, network locations, and path variables (e.g., `%HOMEPATH%`) are all supported. |

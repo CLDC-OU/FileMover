@@ -113,6 +113,8 @@ class MoverConfigBuilder:
                 self.set_collision_avoidance_behavior(value)
             elif option == 'destination_collision_behavior':
                 self.set_destination_collision_behavior(value)
+            elif option == 'id':
+                self.set_id(value)
             elif option == 'mover_name':
                 self.set_name(value)
             elif option == 'mover_description':
@@ -417,6 +419,10 @@ class MoverConfigBuilder:
         self._print_set_message("Destination Collision Behavior", value)
         return self
 
+    def set_id(self, value):
+        self.config["id"] = value
+        self._print_set_message("ID", value)
+        return self
     def set_name(self, value):
         if not value or len(value) < 1:
             raise ValueError(f"{ERROR_COLOR}Name must not be blank{Style.RESET_ALL}")
@@ -782,6 +788,13 @@ class InteractiveMoverConfigBuilder(MoverConfigBuilder):
             lambda: input(self._get_menu_text(f"Should file matching be recursive (i.e., traverse any subdirectories in the source directory to find matches)?", {'0': 'No', '1': 'Yes'})).strip(),
             input_condition=lambda x: self._try_set_option('recursive', option_map.get(x)),
             invalid_message="Please enter a valid menu option"
+        )
+
+    # ===== ID =====
+    def _interactive_id(self):
+        self._repeat_prompt_until_valid(
+            lambda: input(f"Enter a unique identifier for your file mover or press Enter to leave blank (cross-execution metadata tracking will be disabled): ").strip(),
+            input_condition=lambda x: self._try_set_option('id', x),
         )
 
     # ===== Name =====
